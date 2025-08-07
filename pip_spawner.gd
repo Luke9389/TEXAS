@@ -4,8 +4,8 @@ extends Node2D
 @export var num_pips_to_spawn: int = 50
 @export var pip_scene: PackedScene = preload("res://pip.tscn")
 @export var texas_boundary_path: NodePath = "../TEXAS"
-@export var spawn_attempts_per_pip: int = 100
 
+var spawn_strategy: SpawnStrategy
 var texas_boundary: TexasBoundary
 var spawned_pips: Array[PipArea] = []
 
@@ -22,6 +22,10 @@ func _ready():
 		push_error("PipSpawner: No pip scene assigned!")
 		return
 	
+	# Set default spawn strategy if none assigned
+	if not spawn_strategy:
+		spawn_strategy = RandomSpawnStrategy.new()
+	
 	# Wait a frame to ensure everything is ready
 	await get_tree().process_frame
 	
@@ -30,51 +34,23 @@ func _ready():
 func spawn_pips():
 	print("Spawning ", num_pips_to_spawn, " pips in Texas...")
 	
-	# Get the inner boundary polygon to determine spawn area
-	var boundary_polygon = texas_boundary.get_local_inner_boundary_polygon()
-	if boundary_polygon.is_empty():
-		push_error("PipSpawner: No inner boundary polygon found!")
+	if not spawn_strategy:
+		push_error("PipSpawner: No spawn strategy assigned!")
 		return
 	
-	# Calculate bounding box of Texas
-	var min_x = INF
-	var max_x = -INF
-	var min_y = INF
-	var max_y = -INF
+	# Get existing pip positions to avoid conflicts
+	var existing_positions: Array[Vector2] = []
+	for pip in spawned_pips:
+		existing_positions.append(pip.global_position)
 	
-	for point in boundary_polygon:
-		var global_point = texas_boundary.to_global(point)
-		min_x = min(min_x, global_point.x)
-		max_x = max(max_x, global_point.x)
-		min_y = min(min_y, global_point.y)
-		max_y = max(max_y, global_point.y)
+	# Use strategy to generate positions
+	var positions = spawn_strategy.generate_positions(num_pips_to_spawn, texas_boundary, existing_positions)
 	
-	# Spawn pips
-	var successful_spawns = 0
-	for i in range(num_pips_to_spawn):
-		var pip_spawned = false
-		
-		# Try multiple times to find a valid position
-		for attempt in range(spawn_attempts_per_pip):
-			# Generate random position within bounding box
-			var random_pos = Vector2(
-				randf_range(min_x, max_x),
-				randf_range(min_y, max_y)
-			)
-			
-			# Check if position is inside inner Texas boundary
-			if texas_boundary.is_point_inside_inner_boundary(random_pos):
-				# Check if position is not too close to existing pips
-				if _is_position_valid(random_pos):
-					_spawn_pip_at_position(random_pos)
-					successful_spawns += 1
-					pip_spawned = true
-					break
-		
-		if not pip_spawned:
-			print("Warning: Could not find valid position for pip ", i + 1)
+	# Spawn pips at generated positions
+	for spawn_position in positions:
+		_spawn_pip_at_position(spawn_position)
 	
-	print("Successfully spawned ", successful_spawns, " pips out of ", num_pips_to_spawn, " requested")
+	print("Successfully spawned ", positions.size(), " pips out of ", num_pips_to_spawn, " requested")
 
 func _spawn_pip_at_position(spawn_position: Vector2):
 	var pip_instance = pip_scene.instantiate() as PipArea
@@ -92,12 +68,20 @@ func _spawn_pip_at_position(spawn_position: Vector2):
 	add_child(pip_instance)
 	spawned_pips.append(pip_instance)
 
+# This method is now handled by spawn strategies, but kept for backward compatibility
 func _is_position_valid(_position: Vector2, min_distance: float = 60.0) -> bool:
-	# Check distance from existing pips to avoid overlap
-	for existing_pip in spawned_pips:
-		if existing_pip.global_position.distance_to(position) < min_distance:
-			return false
-	return true
+	var existing_positions: Array[Vector2] = []
+	for pip in spawned_pips:
+		existing_positions.append(pip.global_position)
+	
+	if spawn_strategy:
+		return spawn_strategy.is_position_valid(_position, existing_positions, min_distance)
+	else:
+		# Fallback to old logic if no strategy
+		for existing_pip in spawned_pips:
+			if existing_pip.global_position.distance_to(_position) < min_distance:
+				return false
+		return true
 
 func get_all_spawned_pips() -> Array[PipArea]:
 	return spawned_pips

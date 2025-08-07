@@ -4,6 +4,7 @@
 - **DO NOT EDIT .tscn files directly** - These are binary/text hybrid files that can become corrupted
 - If code changes require scene modifications (like attaching scripts, changing node types, adding nodes, etc.), **ASK THE USER** to make those changes in the Godot editor instead
 - Only create new .gd script files and let the user attach them manually
+- **Allow the engine to create and manage uid files (and tscn files)**
 
 ## When to Ask for Manual Changes
 Ask the user to handle these tasks in the Godot editor:
@@ -38,6 +39,8 @@ This prevents corruption and maintains clean scene files.
 ## ✅ Completed Refactors
 1. **Unused Code Removal** - Removed backward compatibility methods, unused exports, and dead code
 2. **Animation Utilities** - Created reusable animation patterns, fixed tween errors
+3. **Boundary Utilities** - Eliminated coordinate conversion duplication, reduced texas_boundary.gd from 140 to 86 lines
+4. **Spawn Strategy Pattern** - Flexible pip spawning with 3 strategies: Random, Grid, Clustered. Reduced pip_spawner.gd complexity
 
 ## 🚧 Remaining Refactors (In Priority Order)
 
@@ -114,3 +117,4 @@ GameRoot (Node2D)
 - **Low risk first**: File organization and utilities before architectural changes
 - **Test after each**: Verify game functionality after each refactor
 - **Update paths**: Remember to update NodePath exports and preload paths
+```
