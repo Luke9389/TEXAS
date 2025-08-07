@@ -1,80 +1,25 @@
-[gd_scene load_steps=6 format=3 uid="uid://cgmdrn6ppgb6f"]
+[gd_scene load_steps=7 format=3 uid="uid://cgmdrn6ppgb6f"]
 
-[ext_resource type="Texture2D" uid="uid://c7nppwr77084" path="res://assets/TEXAS@4x.png" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://b1eri6ejadk4w" path="res://TEXAS.tscn" id="1_lquwl"]
 [ext_resource type="PackedScene" uid="uid://pcyatqa56x13" path="res://pip.tscn" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://cnbntu0wy3wod" path="res://pip_spawner.gd" id="2_7mycd"]
 [ext_resource type="PackedScene" uid="uid://drp28s70f56qx" path="res://district.tscn" id="3_district"]
 [ext_resource type="Script" uid="uid://l66ik8b1enet" path="res://district_manager.gd" id="4_district_manager"]
 [ext_resource type="Script" uid="uid://evym7o37nj4k" path="res://district_counter_ui.gd" id="5_lquwl"]
 
 [node name="Node2D" type="Node2D"]
 
-[node name="TEXAS" type="Sprite2D" parent="."]
-position = Vector2(444, 301)
-scale = Vector2(0.35856, 0.35856)
-texture = ExtResource("1_ig7tw")
+[node name="TEXAS" parent="." instance=ExtResource("1_lquwl")]
 
 [node name="Pips" type="Node2D" parent="."]
-
-[node name="Pip" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(396, 223)
-
-[node name="Pip2" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(276, 327)
-
-[node name="Pip3" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(373, 111)
-
-[node name="Pip4" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(435, 351)
-
-[node name="Pip5" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(548, 268)
-
-[node name="Pip6" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(558, 353)
-
-[node name="Pip7" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(638, 313)
-
-[node name="Pip8" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(598, 213)
-
-[node name="Pip9" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(517, 196)
-
-[node name="Pip10" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(506, 471)
-
-[node name="Pip11" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(688, 483)
-
-[node name="Pip12" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(655, 416)
-
-[node name="Pip13" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(585, 547)
-
-[node name="Pip14" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(442, 425)
-
-[node name="Pip15" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(784, 320)
-
-[node name="Pip16" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(725, 239)
-
-[node name="Pip17" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(746, 237)
-
-[node name="Pip18" parent="Pips" instance=ExtResource("2_0xm2m")]
-position = Vector2(731, 214)
+script = ExtResource("2_7mycd")
 
 [node name="DistrictManager" type="Node2D" parent="."]
 script = ExtResource("4_district_manager")
 district_scene = ExtResource("3_district")
 pip_scene = ExtResource("2_0xm2m")
 
-[node name="UI" type="Control" parent="." node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label")]
+[node name="UI" type="Control" parent="." node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label", "vote_button")]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
@@ -85,6 +30,7 @@ orange_label = NodePath("VBoxContainer/OrangeLabel")
 gray_label = NodePath("VBoxContainer/GrayLabel")
 districts_progress = NodePath("VBoxContainer/Control/ProgressBar")
 districts_label = NodePath("VBoxContainer/Control/DistrictsLabel")
+vote_button = NodePath("VBoxContainer/VoteButton")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI"]
 layout_mode = 0
@@ -110,3 +56,7 @@ size_flags_vertical = 1
 
 [node name="DistrictsLabel" type="Label" parent="UI/VBoxContainer/Control"]
 layout_mode = 2
+
+[node name="VoteButton" type="Button" parent="UI/VBoxContainer"]
+layout_mode = 2
+text = "Vote!"

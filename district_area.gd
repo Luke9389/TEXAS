@@ -1,11 +1,17 @@
 class_name DistrictArea
 extends Area2D
 
-@export var line_color: Color = Color(0.2, 0.4, 0.8, 0.5)
-@export var fill_color: Color = Color(0.2, 0.4, 0.8, 0.3)
-@export var line_width: float = 3.0
-@export var min_point_distance: float = 10.0
-@export var min_polygon_points: int = 3
+# Visual constants
+const LINE_WIDTH_DEFAULT = 3.0
+const MIN_POINT_DISTANCE = 10.0
+const MIN_POLYGON_POINTS = 3
+const ANIMATION_FLASH_DURATION = 0.1
+const ANIMATION_FADE_DURATION = 0.3
+const ANIMATION_TOTAL_DURATION = 0.4
+
+@export var line_width: float = LINE_WIDTH_DEFAULT
+@export var min_point_distance: float = MIN_POINT_DISTANCE
+@export var min_polygon_points: int = MIN_POLYGON_POINTS
 
 var is_drawing: bool = false
 var polygon_points: PackedVector2Array = []
@@ -22,21 +28,26 @@ signal pip_enclosed_while_drawing(pip: PipArea)
 signal pip_released_while_drawing(pip: PipArea)
 
 var deletion_tween: Tween
+var voting_tween: Tween
 
 func _ready():
 	line_2d = Line2D.new()
 	line_2d.width = line_width
-	line_2d.default_color = line_color
-	line_2d.joint_mode = 2  # LINE_JOINT_ROUND
-	line_2d.begin_cap_mode = 2  # LINE_CAP_ROUND
-	line_2d.end_cap_mode = 2  # LINE_CAP_ROUND
+	line_2d.default_color = PartyColors.get_default_border_color()
+	line_2d.joint_mode = Line2D.LINE_JOINT_ROUND
+	line_2d.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	line_2d.end_cap_mode = Line2D.LINE_CAP_ROUND
 	add_child(line_2d)
 	
 	polygon_2d = Polygon2D.new()
-	polygon_2d.color = fill_color
+	polygon_2d.color = PartyColors.get_default_fill_color()
 	add_child(polygon_2d)
 	
-	collision_polygon = $CollisionPolygon2D
+	collision_polygon = get_node_or_null("CollisionPolygon2D") as CollisionPolygon2D
+	if not collision_polygon:
+		push_warning("DistrictArea: CollisionPolygon2D node not found, creating one")
+		collision_polygon = CollisionPolygon2D.new()
+		add_child(collision_polygon)
 
 func set_district_manager(manager: Node2D):
 	district_manager = manager
@@ -85,9 +96,12 @@ func finish_drawing() -> bool:
 	
 	polygon_points.append(polygon_points[0])
 	
-	line_2d.points = polygon_points
-	polygon_2d.polygon = polygon_points
-	collision_polygon.polygon = polygon_points
+	if line_2d:
+		line_2d.points = polygon_points
+	if polygon_2d:
+		polygon_2d.polygon = polygon_points
+	if collision_polygon:
+		collision_polygon.polygon = polygon_points
 	
 	# Reset pip highlighting and finalize containment
 	for pip in currently_enclosed_pips:
@@ -111,7 +125,9 @@ func check_contained_pips():
 		for pip in all_pips:
 			var local_pip_pos = pip.position - position
 			if Geometry2D.is_point_in_polygon(local_pip_pos, polygon_points):
-				contained_pips.append(pip)
+				# Only claim pips that aren't already in another district
+				if not _is_pip_already_claimed(pip):
+					contained_pips.append(pip)
 
 func check_contained_pips_realtime(temp_polygon: PackedVector2Array):
 	if not district_manager or not district_manager.has_method("get_all_pips"):
@@ -125,13 +141,17 @@ func check_contained_pips_realtime(temp_polygon: PackedVector2Array):
 	for pip in all_pips:
 		var local_pip_pos = pip.position - position
 		if Geometry2D.is_point_in_polygon(local_pip_pos, temp_polygon):
+			# Check if this pip already belongs to another district
+			if _is_pip_already_claimed(pip):
+				continue  # Skip pips that are already in a district
+			
 			newly_enclosed.append(pip)
 			
 			# Check if this is a newly enclosed pip
 			if pip not in currently_enclosed_pips:
 				pip_enclosed_while_drawing.emit(pip)
 				# Visual feedback - make the pip glow or change color
-				pip.modulate = Color(1.5, 1.5, 1.5, 1.0)  # Brighten the pip
+				pip.modulate = Color.WHITE * PartyColors.PIP_HIGHLIGHT_FACTOR
 			
 			still_enclosed.append(pip)
 	
@@ -140,7 +160,7 @@ func check_contained_pips_realtime(temp_polygon: PackedVector2Array):
 		if pip not in newly_enclosed:
 			pip_released_while_drawing.emit(pip)
 			# Reset visual feedback
-			pip.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Reset to normal
+			pip.modulate = Color.WHITE
 	
 	currently_enclosed_pips = still_enclosed
 	
@@ -150,79 +170,33 @@ func check_contained_pips_realtime(temp_polygon: PackedVector2Array):
 func get_polygon_points() -> PackedVector2Array:
 	return polygon_points
 
+func set_polygon_points(new_points: PackedVector2Array):
+	polygon_points = new_points
+	if line_2d:
+		line_2d.points = polygon_points
+	if polygon_2d:
+		polygon_2d.polygon = polygon_points
+	if collision_polygon:
+		collision_polygon.polygon = polygon_points
+	# Re-check contained pips with new boundary
+	check_contained_pips()
+	update_district_colors()
+
 func get_area() -> float:
-	if polygon_points.size() < 3:
-		return 0.0
-	
-	var area = 0.0
-	for i in range(polygon_points.size() - 1):
-		area += polygon_points[i].x * polygon_points[i + 1].y
-		area -= polygon_points[i + 1].x * polygon_points[i].y
-	
-	return abs(area) / 2.0
+	return DistrictStatistics.calculate_polygon_area(polygon_points)
 
 func get_pip_counts() -> Dictionary:
-	var counts = {"green": 0, "orange": 0}
-	for pip in contained_pips:
-		if pip.party == PipArea.Party.GREEN:
-			counts.green += 1
-		else:
-			counts.orange += 1
-	return counts
+	return DistrictStatistics.count_pips_by_party(contained_pips)
 
 func get_winning_party() -> PipArea.Party:
-	var counts = get_pip_counts()
-	if counts.green > counts.orange:
-		return PipArea.Party.GREEN
-	elif counts.orange > counts.green:
-		return PipArea.Party.ORANGE
-	else:
-		return PipArea.Party.NONE
+	return DistrictStatistics.get_winning_party(contained_pips)
 
 func update_district_colors():
-	var winning_party = get_winning_party()
-	
-	match winning_party:
-		PipArea.Party.GREEN:
-			line_2d.default_color = Color(0.2, 0.8, 0.2, 0.8)  # Green border
-			polygon_2d.color = Color(0.2, 0.8, 0.2, 0.3)      # Green fill
-		PipArea.Party.ORANGE:
-			line_2d.default_color = Color(1.0, 0.5, 0.0, 0.8)  # Orange border
-			polygon_2d.color = Color(1.0, 0.5, 0.0, 0.3)      # Orange fill
-		PipArea.Party.NONE:
-			line_2d.default_color = Color(0.5, 0.5, 0.5, 0.8)  # Gray border (tie)
-			polygon_2d.color = Color(0.5, 0.5, 0.5, 0.3)      # Gray fill (tie)
+	_apply_colors_for_party(get_winning_party())
 
 func update_district_colors_realtime():
-	# Calculate the winning party from currently enclosed pips (while drawing)
-	var green_count = 0
-	var orange_count = 0
-	
-	for pip in currently_enclosed_pips:
-		if pip.party == PipArea.Party.GREEN:
-			green_count += 1
-		else:
-			orange_count += 1
-	
-	var winning_party: PipArea.Party
-	if green_count > orange_count:
-		winning_party = PipArea.Party.GREEN
-	elif orange_count > green_count:
-		winning_party = PipArea.Party.ORANGE
-	else:
-		winning_party = PipArea.Party.NONE
-	
-	# Update colors based on current majority
-	match winning_party:
-		PipArea.Party.GREEN:
-			line_2d.default_color = Color(0.2, 0.8, 0.2, 0.8)  # Green border
-			polygon_2d.color = Color(0.2, 0.8, 0.2, 0.3)      # Green fill
-		PipArea.Party.ORANGE:
-			line_2d.default_color = Color(1.0, 0.5, 0.0, 0.8)  # Orange border
-			polygon_2d.color = Color(1.0, 0.5, 0.0, 0.3)      # Orange fill
-		PipArea.Party.NONE:
-			line_2d.default_color = Color(0.2, 0.4, 0.8, 0.5)  # Default blue border
-			polygon_2d.color = Color(0.2, 0.4, 0.8, 0.3)      # Default blue fill
+	var winning_party = DistrictStatistics.get_winning_party(currently_enclosed_pips)
+	_apply_colors_for_party(winning_party, true)
 
 func animate_deletion():
 	# Create a deletion animation - flash red then fade out
@@ -230,10 +204,85 @@ func animate_deletion():
 	deletion_tween.set_parallel(true)
 	
 	# Flash red
-	deletion_tween.tween_property(line_2d, "default_color", Color(1.0, 0.2, 0.2, 0.8), 0.1)
-	deletion_tween.tween_property(polygon_2d, "color", Color(1.0, 0.2, 0.2, 0.4), 0.1)
+	var flash_border = PartyColors.DELETION_RED
+	flash_border.a = PartyColors.BORDER_ALPHA
+	var flash_fill = PartyColors.DELETION_RED
+	flash_fill.a = 0.4
+	
+	deletion_tween.tween_property(line_2d, "default_color", flash_border, ANIMATION_FLASH_DURATION)
+	deletion_tween.tween_property(polygon_2d, "color", flash_fill, ANIMATION_FLASH_DURATION)
 	
 	# Then fade out
-	deletion_tween.tween_property(line_2d, "default_color", Color(1.0, 0.2, 0.2, 0.0), 0.3).set_delay(0.1)
-	deletion_tween.tween_property(polygon_2d, "color", Color(1.0, 0.2, 0.2, 0.0), 0.3).set_delay(0.1)
-	deletion_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.3).set_delay(0.1)
+	var fade_border = PartyColors.DELETION_RED
+	fade_border.a = 0.0
+	var fade_fill = PartyColors.DELETION_RED
+	fade_fill.a = 0.0
+	
+	deletion_tween.tween_property(line_2d, "default_color", fade_border, ANIMATION_FADE_DURATION).set_delay(ANIMATION_FLASH_DURATION)
+	deletion_tween.tween_property(polygon_2d, "color", fade_fill, ANIMATION_FADE_DURATION).set_delay(ANIMATION_FLASH_DURATION)
+	deletion_tween.tween_property(self, "modulate", Color.TRANSPARENT, ANIMATION_FADE_DURATION).set_delay(ANIMATION_FLASH_DURATION)
+
+# Helper function to apply colors based on party
+func _apply_colors_for_party(party: PipArea.Party, use_default_for_tie: bool = false):
+	if not line_2d or not polygon_2d:
+		return
+	
+	if party == PipArea.Party.NONE and use_default_for_tie:
+		line_2d.default_color = PartyColors.get_default_border_color()
+		polygon_2d.color = PartyColors.get_default_fill_color()
+	else:
+		line_2d.default_color = PartyColors.get_party_border_color(party)
+		polygon_2d.color = PartyColors.get_party_fill_color(party)
+
+# Check if a pip is already claimed by another district
+func _is_pip_already_claimed(pip: PipArea) -> bool:
+	if not district_manager or not district_manager.has_method("get_all_districts"):
+		return false
+	
+	var all_districts = district_manager.get_all_districts()
+	for district in all_districts:
+		if district == self:
+			continue  # Skip self
+		if district.contained_pips.has(pip):
+			return true
+	return false
+
+# Visual feedback for voting state
+func set_voting_state(is_voting: bool):
+	if is_voting:
+		_start_voting_animation()
+	else:
+		_stop_voting_animation()
+
+func _start_voting_animation():
+	# Stop any existing voting animation
+	if voting_tween:
+		voting_tween.kill()
+	
+	# Flash the district blue to indicate it's about to vote
+	voting_tween = create_tween()
+	voting_tween.set_parallel(true)
+	voting_tween.set_loops()  # Loop indefinitely
+	
+	var voting_border = PartyColors.PROGRESS_BLUE
+	voting_border.a = PartyColors.BORDER_ALPHA
+	var voting_fill = PartyColors.PROGRESS_BLUE
+	voting_fill.a = 0.3
+	
+	var original_border = line_2d.default_color
+	var original_fill = polygon_2d.color
+	
+	# Flash between blue and original colors
+	var flash_duration = 0.5
+	voting_tween.tween_property(line_2d, "default_color", voting_border, flash_duration)
+	voting_tween.tween_property(polygon_2d, "color", voting_fill, flash_duration)
+	voting_tween.tween_property(line_2d, "default_color", original_border, flash_duration).set_delay(flash_duration)
+	voting_tween.tween_property(polygon_2d, "color", original_fill, flash_duration).set_delay(flash_duration)
+
+func _stop_voting_animation():
+	if voting_tween:
+		voting_tween.kill()
+		voting_tween = null
+	
+	# Restore normal colors
+	update_district_colors()

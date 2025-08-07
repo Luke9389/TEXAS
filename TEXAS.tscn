@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://b1eri6ejadk4w"]
+
+[ext_resource type="Texture2D" uid="uid://c7nppwr77084" path="res://assets/TEXAS@4x.png" id="1_hwnoh"]
+[ext_resource type="Script" uid="uid://cafa46325vipx" path="res://texas_boundary.gd" id="1_rk6je"]
+
+[node name="TEXAS" type="Node2D"]
+script = ExtResource("1_rk6je")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.288955, 0.288955)
+texture = ExtResource("1_hwnoh")
+centered = false
+
+[node name="OuterBorder" type="Area2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="OuterBorder"]
+polygon = PackedVector2Array(187, 7, 340, 7, 340, 127, 357, 137, 375, 136, 387, 150, 398, 152, 417, 158, 431, 153, 450, 172, 461, 164, 471, 169, 471, 175, 480, 172, 487, 177, 494, 171, 513, 171, 524, 179, 538, 175, 547, 170, 562, 169, 574, 170, 582, 165, 593, 168, 599, 172, 607, 177, 616, 183, 627, 187, 640, 188, 646, 194, 646, 282, 655, 294, 660, 311, 669, 332, 675, 337, 672, 352, 664, 370, 662, 381, 664, 398, 660, 406, 654, 416, 658, 428, 635, 441, 596, 470, 539, 504, 513, 521, 496, 546, 486, 575, 486, 595, 493, 633, 490, 641, 472, 644, 459, 637, 443, 634, 424, 629, 406, 619, 388, 613, 379, 595, 368, 573, 363, 555, 364, 549, 349, 537, 342, 519, 325, 501, 308, 473, 304, 457, 282, 438, 268, 421, 241, 420, 226, 418, 225, 413, 213, 419, 203, 428, 197, 448, 181, 465, 156, 456, 138, 447, 119, 434, 104, 416, 96, 388, 86, 368, 66, 357, 8, 300, 5, 295, 4, 284, 180, 284)
+
+[node name="InnerBorder" type="Area2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="InnerBorder"]
+polygon = PackedVector2Array(202, 25, 326, 24, 326, 141, 363, 157, 425, 174, 477, 192, 525, 201, 582, 189, 626, 206, 626, 297, 652, 337, 644, 387, 638, 421, 566, 465, 500, 505, 468, 558, 472, 617, 422, 602, 391, 575, 376, 516, 338, 474, 285, 392, 218, 389, 171, 418, 144, 427, 104, 353, 47, 306, 202, 305)

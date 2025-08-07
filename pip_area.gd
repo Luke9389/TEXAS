@@ -1,51 +1,136 @@
 class_name PipArea
-extends Area2D
+extends Node2D
 
 enum Party { NONE, GREEN, ORANGE }
+enum VoteStatus { NOT_VOTED, VOTED, DID_NOT_VOTE }
 
 @export var party: Party = Party.GREEN:
 	set(value):
 		party = value
 		update_visual()
 
+var vote_status: VoteStatus = VoteStatus.NOT_VOTED
+
 @export var green_texture: Texture2D = preload("res://assets/green_pip.png")
 @export var orange_texture: Texture2D = preload("res://assets/orange_pip.png")
-@export var pip_scale: float = 0.5
+# Constants
+const DEFAULT_PIP_SCALE = 0.5
+const COLLISION_RADIUS = 25.0
+const VOTED_BRIGHTNESS = 1.2
+const DID_NOT_VOTE_BRIGHTNESS = 0.4
+const VOTE_ANIMATION_DURATION = 0.3
+const VOTE_BOUNCE_SCALE = 1.2
 
-var sprite: Sprite2D
+@export var pip_scale: float = DEFAULT_PIP_SCALE
+
+var pip_sprite: Sprite2D
+var vote_sprite: Sprite2D
+var area_2d: Area2D
+var animation_tween: Tween
 
 func _ready():
-	sprite = Sprite2D.new()
-	sprite.scale = Vector2(pip_scale, pip_scale)
-	add_child(sprite)
-	update_visual()
+	# Get references to child nodes
+	area_2d = $Area2D
+	pip_sprite = $PipSprite
+	vote_sprite = $VoteSprite
 	
-	var collision_shape = $CollisionShape2D
+	# Setup pip sprite scale
+	if pip_sprite:
+		pip_sprite.scale = Vector2(pip_scale, pip_scale)
+	
+	# Setup collision
+	var collision_shape = $Area2D/CollisionShape2D
 	if collision_shape and collision_shape.shape is CircleShape2D:
-		collision_shape.shape.radius = 25
+		collision_shape.shape.radius = COLLISION_RADIUS
+	
+	# Initialize vote sprite as hidden
+	if vote_sprite:
+		vote_sprite.visible = false
+		vote_sprite.scale = Vector2.ZERO
+	
+	update_visual()
 
 func update_visual():
-	if not sprite:
+	if not pip_sprite:
 		return
 	
+	# Set base color and texture based on party
+	var base_color: Color
 	match party:
 		Party.GREEN:
-			sprite.texture = green_texture
-			sprite.modulate = Color(0.2, 0.8, 0.2)
+			pip_sprite.texture = green_texture
+			base_color = PartyColors.GREEN
 		Party.ORANGE:
-			sprite.texture = orange_texture
-			sprite.modulate = Color(1.0, 0.5, 0.0)
+			pip_sprite.texture = orange_texture
+			base_color = PartyColors.ORANGE
 		Party.NONE:
-			sprite.modulate = Color.GRAY
+			base_color = PartyColors.GRAY
+	
+	# Modify brightness based on voting status
+	match vote_status:
+		VoteStatus.VOTED:
+			pip_sprite.modulate = base_color * VOTED_BRIGHTNESS
+		VoteStatus.DID_NOT_VOTE:
+			pip_sprite.modulate = base_color * DID_NOT_VOTE_BRIGHTNESS
+		VoteStatus.NOT_VOTED:
+			pip_sprite.modulate = base_color
 
 func get_party_color() -> Color:
-	match party:
-		Party.GREEN:
-			return Color(0.2, 0.8, 0.2)
-		Party.ORANGE:
-			return Color(1.0, 0.5, 0.0)
-		_:
-			return Color.GRAY
+	return PartyColors.get_party_color(party)
 
 func set_random_party():
 	party = Party.GREEN if randf() < 0.5 else Party.ORANGE
+
+func set_vote_status(status: VoteStatus):
+	vote_status = status
+	update_visual()
+	_animate_vote_status(status)
+
+func reset_voting():
+	vote_status = VoteStatus.NOT_VOTED
+	update_visual()
+	_animate_vote_status(VoteStatus.NOT_VOTED)
+
+# Animate the vote checkbox based on status
+func _animate_vote_status(status: VoteStatus):
+	if not vote_sprite:
+		return
+	
+	# Stop any existing animation
+	if animation_tween:
+		animation_tween.kill()
+	
+	animation_tween = create_tween()
+	animation_tween.set_parallel(true)
+	
+	match status:
+		VoteStatus.VOTED:
+			# Show and animate in the checkbox with a bounce
+			vote_sprite.visible = true
+			vote_sprite.scale = Vector2.ZERO
+			vote_sprite.modulate = Color.WHITE
+			
+			# Get the original scale from the scene
+			var original_scale = Vector2(0.294118, 0.294118)  # From the scene file
+			var bounce_scale = original_scale * VOTE_BOUNCE_SCALE
+			
+			# Bounce scale animation
+			animation_tween.tween_property(vote_sprite, "scale", bounce_scale, VOTE_ANIMATION_DURATION * 0.6)
+			animation_tween.tween_property(vote_sprite, "scale", original_scale, VOTE_ANIMATION_DURATION * 0.4).set_delay(VOTE_ANIMATION_DURATION * 0.6)
+			
+		VoteStatus.DID_NOT_VOTE:
+			# Hide the checkbox
+			if vote_sprite.visible:
+				animation_tween.tween_property(vote_sprite, "scale", Vector2.ZERO, VOTE_ANIMATION_DURATION * 0.5)
+				animation_tween.tween_property(vote_sprite, "modulate", Color.TRANSPARENT, VOTE_ANIMATION_DURATION * 0.5)
+				animation_tween.tween_callback(_hide_vote_sprite).set_delay(VOTE_ANIMATION_DURATION * 0.5)
+			
+		VoteStatus.NOT_VOTED:
+			# Hide immediately
+			vote_sprite.visible = false
+			vote_sprite.scale = Vector2.ZERO
+			vote_sprite.modulate = Color.WHITE
+
+func _hide_vote_sprite():
+	if vote_sprite:
+		vote_sprite.visible = false

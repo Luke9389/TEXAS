@@ -1,11 +1,20 @@
-[gd_scene load_steps=3 format=3 uid="uid://pcyatqa56x13"]
+[gd_scene load_steps=4 format=3 uid="uid://pcyatqa56x13"]
 
 [ext_resource type="Script" uid="uid://cr0aoi50nsnga" path="res://pip_area.gd" id="1_pip3d"]
+[ext_resource type="Texture2D" uid="uid://ckd1l5siugqtg" path="res://assets/vote-mark@4x.png" id="2_2foya"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_402u0"]
 
-[node name="Pip" type="Area2D"]
+[node name="Pip" type="Node2D"]
 script = ExtResource("1_pip3d")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
 shape = SubResource("CircleShape2D_402u0")
+
+[node name="PipSprite" type="Sprite2D" parent="."]
+
+[node name="VoteSprite" type="Sprite2D" parent="."]
+scale = Vector2(0.294118, 0.294118)
+texture = ExtResource("2_2foya")
