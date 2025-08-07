@@ -76,14 +76,14 @@ func spawn_pips():
 	
 	print("Successfully spawned ", successful_spawns, " pips out of ", num_pips_to_spawn, " requested")
 
-func _spawn_pip_at_position(position: Vector2):
+func _spawn_pip_at_position(spawn_position: Vector2):
 	var pip_instance = pip_scene.instantiate() as PipArea
 	if not pip_instance:
 		push_error("PipSpawner: Failed to instantiate pip scene!")
 		return
 	
 	# Set position
-	pip_instance.global_position = position
+	pip_instance.global_position = spawn_position
 	
 	# Set random party
 	pip_instance.set_random_party()
@@ -92,7 +92,7 @@ func _spawn_pip_at_position(position: Vector2):
 	add_child(pip_instance)
 	spawned_pips.append(pip_instance)
 
-func _is_position_valid(position: Vector2, min_distance: float = 60.0) -> bool:
+func _is_position_valid(_position: Vector2, min_distance: float = 60.0) -> bool:
 	# Check distance from existing pips to avoid overlap
 	for existing_pip in spawned_pips:
 		if existing_pip.global_position.distance_to(position) < min_distance:

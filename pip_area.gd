@@ -100,36 +100,29 @@ func _animate_vote_status(status: VoteStatus):
 	if animation_tween:
 		animation_tween.kill()
 	
-	animation_tween = create_tween()
-	animation_tween.set_parallel(true)
-	
 	match status:
 		VoteStatus.VOTED:
 			# Show and animate in the checkbox with a bounce
-			vote_sprite.visible = true
-			vote_sprite.scale = Vector2.ZERO
-			vote_sprite.modulate = Color.WHITE
-			
-			# Get the original scale from the scene
-			var original_scale = Vector2(0.294118, 0.294118)  # From the scene file
-			var bounce_scale = original_scale * VOTE_BOUNCE_SCALE
-			
-			# Bounce scale animation
-			animation_tween.tween_property(vote_sprite, "scale", bounce_scale, VOTE_ANIMATION_DURATION * 0.6)
-			animation_tween.tween_property(vote_sprite, "scale", original_scale, VOTE_ANIMATION_DURATION * 0.4).set_delay(VOTE_ANIMATION_DURATION * 0.6)
+			if vote_sprite:
+				var original_scale = Vector2(0.294118, 0.294118)  # From the scene file
+				
+				# Use animation utilities for bounce effect
+				animation_tween = AnimationUtilities.show_by_scale_bounce(vote_sprite, original_scale, VOTE_ANIMATION_DURATION, VOTE_BOUNCE_SCALE)
 			
 		VoteStatus.DID_NOT_VOTE:
-			# Hide the checkbox
+			# Hide the checkbox using animation utilities
 			if vote_sprite.visible:
-				animation_tween.tween_property(vote_sprite, "scale", Vector2.ZERO, VOTE_ANIMATION_DURATION * 0.5)
-				animation_tween.tween_property(vote_sprite, "modulate", Color.TRANSPARENT, VOTE_ANIMATION_DURATION * 0.5)
-				animation_tween.tween_callback(_hide_vote_sprite).set_delay(VOTE_ANIMATION_DURATION * 0.5)
+				animation_tween = AnimationUtilities.hide_by_scale(vote_sprite, VOTE_ANIMATION_DURATION * 0.5, _hide_vote_sprite)
+			else:
+				# If already hidden, just ensure animation_tween is null
+				animation_tween = null
 			
 		VoteStatus.NOT_VOTED:
-			# Hide immediately
+			# Hide immediately without animation
 			vote_sprite.visible = false
 			vote_sprite.scale = Vector2.ZERO
 			vote_sprite.modulate = Color.WHITE
+			animation_tween = null
 
 func _hide_vote_sprite():
 	if vote_sprite:

@@ -55,14 +55,14 @@ func _on_district_deleted(_district: DistrictArea):
 
 func _on_district_limit_reached():
 	# Flash both the progress bar and label red to indicate limit reached
+	var nodes_to_flash: Array[Node] = []
 	if districts_progress:
-		var tween = create_tween()
-		tween.set_parallel(true)
-		tween.tween_property(districts_progress, "modulate", Color.RED, FLASH_DURATION)
-		tween.tween_property(districts_progress, "modulate", Color.WHITE, FLASH_DURATION).set_delay(FLASH_DURATION)
-		if districts_label:
-			tween.tween_property(districts_label, "modulate", Color.RED, FLASH_DURATION)
-			tween.tween_property(districts_label, "modulate", Color.WHITE, FLASH_DURATION).set_delay(FLASH_DURATION)
+		nodes_to_flash.append(districts_progress)
+	if districts_label:
+		nodes_to_flash.append(districts_label)
+	
+	if not nodes_to_flash.is_empty():
+		AnimationUtilities.flash_multiple_nodes(nodes_to_flash, Color.RED, FLASH_DURATION, Color.WHITE)
 
 func update_district_counts():
 	if not district_manager:

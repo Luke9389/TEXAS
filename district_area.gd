@@ -260,10 +260,6 @@ func _start_voting_animation():
 		voting_tween.kill()
 	
 	# Flash the district blue to indicate it's about to vote
-	voting_tween = create_tween()
-	voting_tween.set_parallel(true)
-	voting_tween.set_loops()  # Loop indefinitely
-	
 	var voting_border = PartyColors.PROGRESS_BLUE
 	voting_border.a = PartyColors.BORDER_ALPHA
 	var voting_fill = PartyColors.PROGRESS_BLUE
@@ -272,8 +268,12 @@ func _start_voting_animation():
 	var original_border = line_2d.default_color
 	var original_fill = polygon_2d.color
 	
-	# Flash between blue and original colors
+	# Use animation utilities for the looping flash
 	var flash_duration = 0.5
+	voting_tween = create_tween()
+	voting_tween.set_parallel(true)
+	voting_tween.set_loops()
+	
 	voting_tween.tween_property(line_2d, "default_color", voting_border, flash_duration)
 	voting_tween.tween_property(polygon_2d, "color", voting_fill, flash_duration)
 	voting_tween.tween_property(line_2d, "default_color", original_border, flash_duration).set_delay(flash_duration)
