@@ -70,9 +70,6 @@ func get_global_inner_boundary_polygon() -> PackedVector2Array:
 		global_points.append(to_global(point))
 	return global_points
 
-# Backward compatibility - returns outer boundary
-func get_global_boundary_polygon() -> PackedVector2Array:
-	return get_global_outer_boundary_polygon()
 
 # Get the outer boundary polygon in local coordinates
 func get_local_outer_boundary_polygon() -> PackedVector2Array:
@@ -86,9 +83,6 @@ func get_local_inner_boundary_polygon() -> PackedVector2Array:
 		return PackedVector2Array()
 	return inner_boundary_polygon.polygon
 
-# Backward compatibility - returns outer boundary
-func get_local_boundary_polygon() -> PackedVector2Array:
-	return get_local_outer_boundary_polygon()
 
 # Clip a polygon to the outer Texas boundary
 func clip_polygon_to_boundary(polygon_global: PackedVector2Array) -> Array[PackedVector2Array]:

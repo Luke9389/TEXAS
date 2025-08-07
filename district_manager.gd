@@ -7,7 +7,6 @@ const DELETION_ANIMATION_DELAY = 0.4
 const PIPS_NODE_PATH = "../Pips"
 
 @export var district_scene: PackedScene
-@export var pip_scene: PackedScene
 @export var max_districts: int = DEFAULT_MAX_DISTRICTS
 @export var pips_container_path: NodePath = PIPS_NODE_PATH
 
@@ -18,7 +17,6 @@ var texas_boundary: TexasBoundary = null
 
 signal district_created(district: DistrictArea)
 signal district_deleted(district: DistrictArea)
-signal pip_added(pip: PipArea)
 signal district_limit_reached()
 
 func _ready():
@@ -152,37 +150,10 @@ func get_remaining_districts() -> int:
 func can_draw_district() -> bool:
 	return all_districts.size() < max_districts
 
-func add_pip(pip_position: Vector2, party: PipArea.Party) -> PipArea:
-	var pip: PipArea
-	if pip_scene:
-		pip = pip_scene.instantiate() as PipArea
-	else:
-		pip = PipArea.new()
-	
-	pip.position = pip_position
-	pip.party = party
-	add_child(pip)
-	all_pips.append(pip)
-	pip_added.emit(pip)
-	
-	# Update any existing districts that might contain this pip
-	for district in all_districts:
-		if district.has_method("check_contained_pips"):
-			district.check_contained_pips()
-	
-	return pip
 
 func get_all_pips() -> Array[PipArea]:
 	return all_pips
 
-func spawn_random_pips(count: int, bounds: Rect2):
-	for i in range(count):
-		var random_pos = Vector2(
-			randf_range(bounds.position.x, bounds.position.x + bounds.size.x),
-			randf_range(bounds.position.y, bounds.position.y + bounds.size.y)
-		)
-		var party = PipArea.Party.GREEN if randf() < 0.5 else PipArea.Party.ORANGE
-		add_pip(random_pos, party)
 
 # Signal handlers for real-time pip tracking
 func _on_pip_enclosed_while_drawing(_pip: PipArea):

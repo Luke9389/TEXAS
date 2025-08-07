@@ -1,7 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://cgmdrn6ppgb6f"]
+[gd_scene load_steps=6 format=3 uid="uid://cgmdrn6ppgb6f"]
 
 [ext_resource type="PackedScene" uid="uid://b1eri6ejadk4w" path="res://TEXAS.tscn" id="1_lquwl"]
-[ext_resource type="PackedScene" uid="uid://pcyatqa56x13" path="res://pip.tscn" id="2_0xm2m"]
 [ext_resource type="Script" uid="uid://cnbntu0wy3wod" path="res://pip_spawner.gd" id="2_7mycd"]
 [ext_resource type="PackedScene" uid="uid://drp28s70f56qx" path="res://district.tscn" id="3_district"]
 [ext_resource type="Script" uid="uid://l66ik8b1enet" path="res://district_manager.gd" id="4_district_manager"]
@@ -17,7 +16,6 @@ script = ExtResource("2_7mycd")
 [node name="DistrictManager" type="Node2D" parent="."]
 script = ExtResource("4_district_manager")
 district_scene = ExtResource("3_district")
-pip_scene = ExtResource("2_0xm2m")
 
 [node name="UI" type="Control" parent="." node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label", "vote_button")]
 layout_mode = 3
