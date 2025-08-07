@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://pcyatqa56x13"]
+
+[ext_resource type="Script" uid="uid://cr0aoi50nsnga" path="res://pip_area.gd" id="1_pip3d"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_402u0"]
+
+[node name="Pip" type="Area2D"]
+script = ExtResource("1_pip3d")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_402u0")
