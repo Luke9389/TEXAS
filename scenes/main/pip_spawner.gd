@@ -2,7 +2,7 @@ class_name PipSpawner
 extends Node2D
 
 @export var num_pips_to_spawn: int = 50
-@export var pip_scene: PackedScene = preload("res://pip.tscn")
+@export var pip_scene: PackedScene = preload("res://scenes/pip/pip.tscn")
 @export var texas_boundary_path: NodePath = "../TEXAS"
 
 var spawn_strategy: SpawnStrategy

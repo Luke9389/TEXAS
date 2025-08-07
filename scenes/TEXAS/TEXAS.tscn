@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://b1eri6ejadk4w"]
 
 [ext_resource type="Texture2D" uid="uid://c7nppwr77084" path="res://assets/TEXAS@4x.png" id="1_hwnoh"]
-[ext_resource type="Script" uid="uid://cafa46325vipx" path="res://texas_boundary.gd" id="1_rk6je"]
+[ext_resource type="Script" uid="uid://fbxfgkgsw7lv" path="res://scenes/TEXAS/texas_boundary.gd" id="1_rk6je"]
 
 [node name="TEXAS" type="Node2D"]
 script = ExtResource("1_rk6je")
@@ -19,4 +19,5 @@ polygon = PackedVector2Array(187, 7, 340, 7, 340, 127, 357, 137, 375, 136, 387, 
 [node name="InnerBorder" type="Area2D" parent="."]
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="InnerBorder"]
+position = Vector2(0, 2)
 polygon = PackedVector2Array(202, 25, 326, 24, 326, 141, 363, 157, 425, 174, 477, 192, 525, 201, 582, 189, 626, 206, 626, 297, 652, 337, 644, 387, 638, 421, 566, 465, 500, 505, 468, 558, 472, 617, 422, 602, 391, 575, 376, 516, 338, 474, 285, 392, 218, 389, 171, 418, 144, 427, 104, 353, 47, 306, 202, 305)

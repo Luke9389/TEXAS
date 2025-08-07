@@ -1,0 +1,77 @@
+[gd_scene load_steps=7 format=3 uid="uid://cgmdrn6ppgb6f"]
+
+[ext_resource type="PackedScene" uid="uid://b1eri6ejadk4w" path="res://scenes/TEXAS/TEXAS.tscn" id="1_lquwl"]
+[ext_resource type="Script" uid="uid://cflum3cx3oots" path="res://scenes/main/pip_spawner.gd" id="2_7mycd"]
+[ext_resource type="PackedScene" uid="uid://drp28s70f56qx" path="res://scenes/district/district.tscn" id="3_district"]
+[ext_resource type="Script" uid="uid://bhrajnufn15jh" path="res://scenes/main/district_manager.gd" id="4_district_manager"]
+[ext_resource type="Script" uid="uid://bxv1kn5n2057n" path="res://scenes/main/district_input_handler.gd" id="5_7mycd"]
+[ext_resource type="Script" uid="uid://clpmpt7xdvrdt" path="res://scenes/main/district_counter_ui.gd" id="5_lquwl"]
+
+[node name="Main" type="Node"]
+
+[node name="Geography" type="Node2D" parent="."]
+
+[node name="TEXAS" parent="Geography" instance=ExtResource("1_lquwl")]
+
+[node name="GameplayManagement" type="Node2D" parent="."]
+
+[node name="PipSpawner" type="Node2D" parent="GameplayManagement"]
+script = ExtResource("2_7mycd")
+texas_boundary_path = NodePath("../../Geography/TEXAS")
+
+[node name="DistrictManager" type="Node2D" parent="GameplayManagement"]
+script = ExtResource("4_district_manager")
+district_scene = ExtResource("3_district")
+pips_container_path = NodePath("../PipSpawner")
+
+[node name="InputHandler" type="Node2D" parent="GameplayManagement"]
+script = ExtResource("5_7mycd")
+
+[node name="UserInterface" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DistrictCounterUI" type="Control" parent="UserInterface" node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label", "vote_button")]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("5_lquwl")
+green_label = NodePath("VBoxContainer/GreenLabel")
+orange_label = NodePath("VBoxContainer/OrangeLabel")
+gray_label = NodePath("VBoxContainer/GrayLabel")
+districts_progress = NodePath("VBoxContainer/Control/ProgressBar")
+districts_label = NodePath("VBoxContainer/Control/DistrictsLabel")
+vote_button = NodePath("VBoxContainer/VoteButton")
+district_manager_path = NodePath("../../GameplayManagement/DistrictManager")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UserInterface/DistrictCounterUI"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="GreenLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="OrangeLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="GrayLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="Control" type="MarginContainer" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ProgressBar" type="ProgressBar" parent="UserInterface/DistrictCounterUI/VBoxContainer/Control"]
+layout_mode = 2
+size_flags_vertical = 1
+
+[node name="DistrictsLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer/Control"]
+layout_mode = 2
+
+[node name="VoteButton" type="Button" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
+layout_mode = 2
+text = "Vote!"
