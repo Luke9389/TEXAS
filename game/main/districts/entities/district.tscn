@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://drp28s70f56qx"]
+
+[ext_resource type="Script" uid="uid://dplpadw1b4l23" path="res://game/main/districts/entities/district_area.gd" id="1_xy3d4"]
+
+[node name="District" type="Area2D"]
+script = ExtResource("1_xy3d4")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(0, 0, 0, 0, 0, 0)
