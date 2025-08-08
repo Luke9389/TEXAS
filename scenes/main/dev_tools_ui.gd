@@ -1,8 +1,6 @@
 class_name DevToolsUI
 extends Control
 
-@export var dev_tools_manager: DevToolsManager
-
 var dev_mode_visible: bool = false
 
 @onready var panel: Panel = $Panel
@@ -42,15 +40,15 @@ func toggle_visibility() -> void:
 		print("[DevTools] Closed")
 
 func _on_regenerate_pressed() -> void:
-	if dev_tools_manager:
-		dev_tools_manager.regenerate_map()
-		print("[DevTools] Map regenerated")
+	# Signal up to Main via SignalBus
+	SignalBus.regenerate_map_requested.emit()
+	print("[DevTools] Map regeneration requested")
 
 func _on_strategy_selected(index: int) -> void:
-	if dev_tools_manager:
-		var strategy_name: String = strategy_option.get_item_text(index)
-		dev_tools_manager.set_spawn_strategy(strategy_name)
-		print("[DevTools] Spawn strategy changed to: ", strategy_name)
+	var strategy_name: String = strategy_option.get_item_text(index)
+	# Signal up to Main via SignalBus
+	SignalBus.set_generation_strategy_requested.emit(strategy_name)
+	print("[DevTools] Spawn strategy change requested: ", strategy_name)
 
 func get_current_strategy() -> String:
 	return strategy_option.get_item_text(strategy_option.selected)

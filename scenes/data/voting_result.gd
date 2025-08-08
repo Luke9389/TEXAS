@@ -75,7 +75,7 @@ func clone() -> VotingResult:
 	new_result.turnout_percentage = turnout_percentage
 	return new_result
 
-func to_string() -> String:
+func to_log_string() -> String:
 	var party_name = "TIE"
 	match winning_party:
 		PipArea.Party.GREEN:

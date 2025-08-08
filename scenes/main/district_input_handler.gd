@@ -9,6 +9,10 @@ extends Node2D
 var district_manager: DistrictManager
 var current_district: DistrictArea = null
 
+# Signals up to Main for coordination
+signal district_creation_requested(district: DistrictArea)
+signal district_deletion_requested(district: DistrictArea)
+
 func _ready():
 	# Find the district manager
 	if district_manager_path:
@@ -35,7 +39,8 @@ func _handle_mouse_press(click_pos: Vector2):
 	# Check if we clicked inside an existing district to delete it
 	var clicked_district = get_district_at_point(click_pos)
 	if clicked_district:
-		district_manager.delete_district(clicked_district)
+		# Signal up to Main instead of calling manager directly
+		district_deletion_requested.emit(clicked_district)
 		return
 	
 	# Check if we can draw more districts
@@ -51,8 +56,8 @@ func _handle_mouse_release():
 	# Finish drawing current district
 	if current_district and current_district.is_drawing:
 		if current_district.finish_drawing():
-			# Let district manager handle the completed district
-			district_manager.register_completed_district(current_district)
+			# Signal up to Main instead of calling manager directly
+			district_creation_requested.emit(current_district)
 			current_district = null
 		else:
 			# Drawing failed (not enough points), remove the district

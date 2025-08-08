@@ -48,6 +48,9 @@ func _ready():
 		vote_sprite.visible = false
 		vote_sprite.scale = Vector2.ZERO
 	
+	# Connect to SignalBus for voting animations
+	SignalBus.pip_voted.connect(_on_pip_voted)
+	
 	update_visual()
 
 func update_visual():
@@ -127,3 +130,20 @@ func _animate_vote_status(status: VoteStatus):
 func _hide_vote_sprite():
 	if vote_sprite:
 		vote_sprite.visible = false
+
+# Handle pip voting signal from VotingManager
+func _on_pip_voted(pip_data: PipData) -> void:
+	# Check if this signal is for me
+	var my_id = "pip_" + str(get_instance_id())
+	if pip_data.id == my_id:
+		# Update my vote status and play animation
+		set_vote_status(pip_data.vote_status)
+
+# Convert this pip node to PipData for SignalBus communication
+func to_pip_data() -> PipData:
+	var pip_data = PipData.new()
+	pip_data.id = "pip_" + str(get_instance_id())
+	pip_data.party = party
+	pip_data.position = position
+	pip_data.vote_status = vote_status
+	return pip_data

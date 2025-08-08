@@ -50,6 +50,9 @@ func _ready():
 		push_warning("DistrictArea: CollisionPolygon2D node not found, creating one")
 		collision_polygon = CollisionPolygon2D.new()
 		add_child(collision_polygon)
+	
+	# Connect to SignalBus for voting result updates
+	SignalBus.district_voting_complete.connect(_on_district_voting_complete)
 
 func set_district_manager(manager: Node2D):
 	district_manager = manager
@@ -300,3 +303,26 @@ func reset_voting_state():
 	has_voted = false
 	post_voting_party = PipArea.Party.NONE
 	update_district_colors()
+
+# Handle voting completion signal from VotingManager
+func _on_district_voting_complete(result: VotingResult) -> void:
+	# Check if this result is for me
+	var my_id = "district_" + str(get_instance_id())
+	if result.district_id == my_id:
+		set_post_voting_party(result.winning_party)
+
+# Convert this district node to DistrictData for SignalBus communication
+func to_district_data(district_index: int = 0) -> DistrictData:
+	var district_data = DistrictData.new()
+	district_data.id = "district_" + str(get_instance_id())
+	district_data.position = position
+	district_data.polygon_points = polygon_points
+	district_data.winning_party = get_winning_party()
+	district_data.has_voted = has_voted
+	
+	# Collect pip IDs from contained pips
+	for pip in contained_pips:
+		var pip_id = "pip_" + str(pip.get_instance_id())
+		district_data.add_pip_id(pip_id)
+	
+	return district_data

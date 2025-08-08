@@ -15,6 +15,10 @@ run/main_scene="uid://cgmdrn6ppgb6f"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+SignalBus="*res://scenes/utilities/signal_bus.gd"
+
 [display]
 
 window/stretch/mode="canvas_items"

@@ -1,5 +1,6 @@
-[gd_scene load_steps=11 format=3 uid="uid://cgmdrn6ppgb6f"]
+[gd_scene load_steps=13 format=3 uid="uid://cgmdrn6ppgb6f"]
 
+[ext_resource type="Script" uid="uid://3ewdieisdnij" path="res://scenes/main/main.gd" id="1_blune"]
 [ext_resource type="PackedScene" uid="uid://b1eri6ejadk4w" path="res://scenes/TEXAS/TEXAS.tscn" id="1_lquwl"]
 [ext_resource type="Script" uid="uid://cflum3cx3oots" path="res://scenes/main/pip_spawner.gd" id="2_7mycd"]
 [ext_resource type="PackedScene" uid="uid://drp28s70f56qx" path="res://scenes/district/district.tscn" id="3_district"]
@@ -9,9 +10,11 @@
 [ext_resource type="Script" uid="uid://cu8ys35kxddnp" path="res://scenes/main/house_seats_ui.gd" id="7_a8run"]
 [ext_resource type="Texture2D" uid="uid://cp4h8wy2gfjrg" path="res://assets/blue-chair@4x.png" id="7_b1x3f"]
 [ext_resource type="Script" uid="uid://dt0003l2g0ygw" path="res://scenes/main/dev_tools_ui.gd" id="7_yyfjg"]
-[ext_resource type="Script" uid="uid://b3yjpn256rhru" path="res://scenes/main/dev_tools_manager.gd" id="8_b1x3f"]
+[ext_resource type="Script" uid="uid://denuyjjklvept" path="res://scenes/main/voting_ui.gd" id="10_blune"]
+[ext_resource type="Script" uid="uid://bnp2is1m4pfwh" path="res://scenes/utilities/voting_manager.gd" id="11_blune"]
 
 [node name="Main" type="Node"]
+script = ExtResource("1_blune")
 
 [node name="Geography" type="Node2D" parent="."]
 
@@ -41,10 +44,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="DistrictCounterUI" type="Control" parent="UserInterface" node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label", "vote_button")]
+[node name="DistrictCounterUI" type="Control" parent="UserInterface" node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label")]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 143.0
+offset_right = 205.0
 offset_bottom = 152.0
 script = ExtResource("5_lquwl")
 green_label = NodePath("VBoxContainer/GreenLabel")
@@ -52,8 +55,6 @@ orange_label = NodePath("VBoxContainer/OrangeLabel")
 gray_label = NodePath("VBoxContainer/GrayLabel")
 districts_progress = NodePath("VBoxContainer/Control/ProgressBar")
 districts_label = NodePath("VBoxContainer/Control/DistrictsLabel")
-vote_button = NodePath("VBoxContainer/VoteButton")
-district_manager_path = NodePath("../../GameplayManagement/DistrictManager")
 
 [node name="Panel" type="Panel" parent="UserInterface/DistrictCounterUI"]
 layout_mode = 1
@@ -73,12 +74,15 @@ grow_vertical = 2
 
 [node name="GreenLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
 layout_mode = 2
+text = "Green Districts:"
 
 [node name="OrangeLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
 layout_mode = 2
+text = "Orange Districts:"
 
 [node name="GrayLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
 layout_mode = 2
+text = "Undecided Districts:"
 
 [node name="Control" type="MarginContainer" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
 layout_mode = 2
@@ -87,13 +91,11 @@ size_flags_vertical = 3
 [node name="ProgressBar" type="ProgressBar" parent="UserInterface/DistrictCounterUI/VBoxContainer/Control"]
 layout_mode = 2
 size_flags_vertical = 1
+show_percentage = false
 
 [node name="DistrictsLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer/Control"]
 layout_mode = 2
-
-[node name="VoteButton" type="Button" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
-layout_mode = 2
-text = "Vote!"
+text = "Total Remaining:"
 
 [node name="HouseSeatsUI" type="Control" parent="UserInterface"]
 layout_mode = 1
@@ -147,7 +149,29 @@ texture = ExtResource("7_b1x3f")
 expand_mode = 3
 stretch_mode = 4
 
-[node name="DevTools" type="Control" parent="." node_paths=PackedStringArray("dev_tools_manager")]
+[node name="VotingUI" type="Control" parent="UserInterface" node_paths=PackedStringArray("vote_button")]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 31.0
+offset_top = -114.0
+offset_right = 340.0
+offset_bottom = -30.0
+grow_vertical = 0
+script = ExtResource("10_blune")
+vote_button = NodePath("Button")
+
+[node name="Button" type="Button" parent="UserInterface/VotingUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "VOTE!"
+
+[node name="DevTools" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 3
 anchor_left = 1.0
@@ -159,7 +183,6 @@ offset_top = -154.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("7_yyfjg")
-dev_tools_manager = NodePath("../DevToolsManager")
 
 [node name="Panel" type="Panel" parent="DevTools"]
 layout_mode = 1
@@ -197,8 +220,5 @@ text = "Spawn Strategy:"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="DevToolsManager" type="Node" parent="." node_paths=PackedStringArray("district_manager", "pip_spawner", "district_counter_ui")]
-script = ExtResource("8_b1x3f")
-district_manager = NodePath("../GameplayManagement/DistrictManager")
-pip_spawner = NodePath("../GameplayManagement/PipSpawner")
-district_counter_ui = NodePath("../UserInterface/DistrictCounterUI")
+[node name="VotingManager" type="Node" parent="."]
+script = ExtResource("11_blune")

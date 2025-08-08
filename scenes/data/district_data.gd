@@ -3,6 +3,7 @@ extends Resource
 
 @export var id: String = ""
 @export var pip_ids: Array[String] = []
+@export var pip_data: Array[PipData] = []  # Contains full pip data for voting
 @export var polygon_points: PackedVector2Array = PackedVector2Array()
 @export var position: Vector2 = Vector2.ZERO
 @export var winning_party: PipArea.Party = PipArea.Party.NONE
@@ -42,6 +43,7 @@ func clone() -> DistrictData:
 	var new_district = DistrictData.new()
 	new_district.id = id
 	new_district.pip_ids = pip_ids.duplicate()
+	new_district.pip_data = pip_data.duplicate()
 	new_district.polygon_points = polygon_points.duplicate()
 	new_district.position = position
 	new_district.winning_party = winning_party

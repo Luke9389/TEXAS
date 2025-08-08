@@ -52,9 +52,11 @@ func clear_all_districts():
 		district.queue_free()
 	all_districts.clear()
 	districts_cleared.emit()
+	# Emit to SignalBus for reactive UI updates
+	SignalBus.districts_modified.emit(get_district_data())
 
 
-func delete_district(district: DistrictArea):
+func delete_district(district: DistrictArea) -> bool:
 	if district in all_districts:
 		all_districts.erase(district)
 		district_deleted.emit(district)
@@ -67,6 +69,11 @@ func delete_district(district: DistrictArea):
 		
 		district.queue_free()
 		print("District deleted - remaining: ", all_districts.size())
+		
+		# Emit to SignalBus for reactive UI updates
+		SignalBus.districts_modified.emit(get_district_data())
+		return true
+	return false
 
 func get_all_districts() -> Array[DistrictArea]:
 	return all_districts
@@ -102,19 +109,54 @@ func create_district_instance() -> DistrictArea:
 	return new_district
 
 # Register a completed district from the input handler
-func register_completed_district(district: DistrictArea):
+func register_completed_district(district: DistrictArea) -> bool:
 	if not district:
-		return
+		return false
+	
+	# Validate district can be created
+	if not can_draw_district():
+		print("Cannot register district - limit reached: ", max_districts)
+		return false
 	
 	# Clip the district to Texas boundary and existing districts
 	_clip_district_to_all_boundaries(district)
+	
+	# Validate the district still has a valid polygon after clipping
+	var polygon = district.get_polygon_points()
+	if polygon.size() < 3:
+		print("District invalid after boundary clipping")
+		return false
+	
 	all_districts.append(district)
 	district_created.emit(district)
 	print("District registered - total districts: ", all_districts.size())
+	
+	# Emit to SignalBus for reactive UI updates
+	SignalBus.districts_modified.emit(get_district_data())
+	return true
 
 
 func get_all_pips() -> Array[PipArea]:
 	return all_pips
+
+# Get district data for Main to pass to other systems
+func get_district_data() -> Array[DistrictData]:
+	var district_data: Array[DistrictData] = []
+	
+	for i in range(all_districts.size()):
+		var district = all_districts[i]
+		if district and district.has_method("to_district_data"):
+			var data = district.to_district_data(i)
+			
+			# Add pip data to the district data
+			for pip in district.contained_pips:
+				if pip.has_method("to_pip_data"):
+					var pip_data = pip.to_pip_data()
+					data.pip_data.append(pip_data)
+			
+			district_data.append(data)
+	
+	return district_data
 
 
 # Signal handlers for real-time pip tracking

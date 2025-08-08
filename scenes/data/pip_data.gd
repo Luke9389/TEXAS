@@ -38,7 +38,7 @@ func clone() -> PipData:
 	new_pip.vote_status = vote_status
 	return new_pip
 
-func to_string() -> String:
+func to_log_string() -> String:
 	var party_name = "NONE"
 	match party:
 		PipArea.Party.GREEN:

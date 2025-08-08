@@ -34,186 +34,99 @@ or
 
 This prevents corruption and maintains clean scene files.
 
-# Planned Refactors
+# Architecture: Call Down, Signal Up
 
-Based on comprehensive code audit, here are the refactoring phases to improve architecture:
+Following Godot's "Call Down, Signal Up" principle:
 
-## Phase 1: Extract Business Logic from UI (HIGH PRIORITY)
+## Main Scene Coordination
+**Main.gd** acts as the central coordinator:
+- **Calls Down**: Direct method calls to managers for state changes
+- **Signals Up**: Listens to UI signals for user requests
+- **Data Flow**: Converts between node references and Resource data
 
-### 1.1 Create VotingManager Class
-**Location**: `scenes/utilities/voting_manager.gd`
-**Purpose**: Extract voting simulation logic from DistrictCounterUI with zero dependencies
-
-**Requirements**:
-- Create new class extending Node (for signals and timers)
-- Move voting simulation methods from DistrictCounterUI:194-335
-- **NO DIRECT DEPENDENCIES** - communicate only via signals
-- Input signals: `start_voting(districts_data: Array, pips_data: Array)`
-- Output signals: `voting_started`, `district_voting_started(district_id)`, `pip_voted(pip_id, status)`, `district_voting_complete(district_id, winning_party)`, `runoff_needed(district_ids: Array)`, `all_voting_complete`
-- Accept pure data structures (not node references)
-- Handle runoff election logic internally
-
-**Type-Safe Data Structures**:
 ```gdscript
-# Input data format using Resource classes
-func start_voting(districts: Array[DistrictData], pips: Array[PipData]) -> void
-
-# Signal emissions with typed data
-signal district_voting_complete(result: VotingResult)
-signal pip_voted(pip_data: PipData)
+# Example flow:
+# 1. UI signals up: vote_requested
+# 2. Main calls down: voting_manager.start_voting(districts, pips)
+# 3. Manager emits progress: SignalBus.voting_started
+# 4. UI reacts: _on_voting_started() updates button state
 ```
 
-**Integration**:
-- DistrictCounterUI connects to VotingManager signals
-- DistrictCounterUI converts nodes to data and emits to VotingManager
-- Other systems listen to VotingManager signals for state changes
-- VotingManager is completely unit testable with mock data
+## SignalBus: Minimal Event Broadcasting
+**Purpose**: Simple event broadcasting for reactive UI updates
+**NOT for**: Complex coordination or business logic
+**Signals**:
+- Level generation: `regenerate_map_requested`, `set_generation_strategy_requested`
+- Voting progress: `vote_requested`, `voting_started`
+- District changes: `districts_modified(districts: Array[DistrictData])`
 
-### 1.2 Create GeometryManager Class  
-**Location**: `scenes/utilities/geometry_manager.gd`
-**Purpose**: Pure geometric operations with no node dependencies
+## UI Classes: Pure Reactive Subscribers
+- **DistrictCounterUI**: Emits `vote_requested` up, subscribes to `districts_modified`
+- **HouseSeatsUI**: Pure SignalBus subscriber for seat updates
+- **DevToolsUI**: Emits requests up via SignalBus, owns its logic
 
-**Requirements**:
-- Create static utility class extending RefCounted
-- Move methods from DistrictManager:129-187 (`_clip_district_to_all_boundaries`)
-- **Pure functions only** - no node references, only geometry data
-- Add methods: `clip_polygon_to_boundaries()`, `intersect_polygons()`, `subtract_polygon()`
-- Input: polygon arrays, boundary arrays (PackedVector2Array)
-- Output: modified polygon arrays
-- All coordinate transformations handled by caller
+## Manager Classes: Business Logic Only
+- **VotingManager**: Handles voting simulation, emits progress via SignalBus
+- **SeatManager**: Manages seat assignments, reactive to district changes
+- **GeometryManager**: Pure static functions for polygon operations
 
-**Type-Safe API Design**:
-```gdscript
-static func clip_district_to_boundaries(
-    district_data: DistrictData,
-    boundary_polygon: PackedVector2Array, 
-    existing_districts: Array[DistrictData]
-) -> DistrictData
+## Implementation Priority
+
+### Phase 1: Core Architecture (COMPLETED)
+- ✅ Type-safe Resource data classes (DistrictData, PipData, etc.)
+- ✅ VotingManager: Business logic separation
+- ✅ SeatManager: Seat assignment logic
+- ✅ GeometryManager: Pure geometry functions
+- ✅ SignalBus: Minimal event broadcasting
+
+### Phase 2: UI Simplification (IN PROGRESS)
+- 🔄 DistrictCounterUI: Pure reactive UI (emit vote_requested, subscribe to districts_modified)
+- ⭕ DevToolsUI: Own its logic, emit requests via SignalBus
+- ⭕ Main.gd: Central coordinator for "Call Down, Signal Up"
+- ⭕ Remove DevToolsManager: Logic moves to DevToolsUI
+
+### Phase 3: Testing & Polish (PENDING)
+- ⭕ Unit tests for all manager classes
+- ⭕ Integration testing for signal flow
+- ⭕ Animation system integration
+- ⭕ Performance validation
+
+## Current Signal Flow Design
+
+### "Call Down, Signal Up" Pattern
+```
+UI Layer (Signals Up):
+  DistrictCounterUI.vote_requested → Main
+  DevToolsUI.regenerate_map_requested → Main (via SignalBus)
+
+Coordination Layer (Main.gd):
+  Receives UI signals
+  Calls down to managers
+  Converts node data ↔ Resource data
+
+Business Logic Layer (Managers):
+  VotingManager.start_voting(districts, pips)
+  SeatManager.assign_seats(districts)
+  GeometryManager.clip_polygon() [static]
+
+Reactive UI Layer (SignalBus subscribers):
+  SignalBus.districts_modified → DistrictCounterUI
+  SignalBus.voting_started → DistrictCounterUI
+  SignalBus.seat_assignments_updated → HouseSeatsUI
 ```
 
-**Integration**:
-- DistrictManager prepares polygon data and calls GeometryManager
-- DistrictManager handles coordinate transformations
-- GeometryManager is completely unit testable with polygon data
+### DevTools Simplification
+**Old**: DevToolsManager + DevToolsUI
+**New**: DevToolsUI owns regeneration logic
+- Emits `SignalBus.regenerate_map_requested()`
+- Emits `SignalBus.set_generation_strategy_requested(strategy)`
+- Main listens and calls down to DistrictManager/PipSpawner
 
-### 1.3 Fix DevToolsManager.remove_district Issue
-**Location**: `scenes/main/dev_tools_manager.gd:26`
-**Problem**: Calls non-existent `district_manager.remove_district()`
-**Solution**: Replace with `district_manager.delete_district()`
-
-### 1.4 Create SeatManager Class
-**Location**: `scenes/utilities/seat_manager.gd`
-**Purpose**: Handle seat assignment logic with signal-based communication
-
-**Requirements**:
-- Create class extending RefCounted (pure logic, no scene tree)
-- Move logic from HouseSeatsUI:75-122 but make it data-driven
-- **NO UI DEPENDENCIES** - work with abstract seat/district data
-- Input signals: `district_created(district_data)`, `district_deleted(district_id)`, `districts_cleared()`
-- Output signals: `seat_assignment_changed(seat_index, party)`, `seats_reset()`
-- Manage district-to-seat mapping internally
-- Provide query methods for current state
-
-**Type-Safe API Design**:
-```gdscript
-class_name SeatManager
-extends RefCounted
-
-signal seat_assignment_changed(seat_data: SeatData)
-signal seats_reset()
-
-func assign_district_to_seat(district_data: DistrictData) -> void
-func remove_district_from_seat(district_id: String) -> void
-func get_seat_assignments() -> Array[SeatData]
-func clear_all_seats() -> void
-```
-
-**Integration**:
-- HouseSeatsUI creates SeatManager and connects to its signals
-- HouseSeatsUI connects district signals to SeatManager methods
-- SeatManager emits changes, UI updates visuals accordingly
-- SeatManager is unit testable with mock district data
-
-## Phase 2: Animation Separation (MEDIUM PRIORITY)
-
-### 2.1 Create VotingAnimator Class
-**Location**: `scenes/utilities/voting_animator.gd`
-**Purpose**: Handle all voting-related animations with signal-based triggering
-
-**Requirements**:
-- Create class extending Node for animation capabilities
-- **NO BUSINESS LOGIC DEPENDENCIES** - only respond to animation signals
-- Input signals: `animate_district_voting(district_id)`, `animate_pip_vote(pip_id)`, `animate_seat_voting(seat_index)`, `stop_all_animations()`
-- Uses node lookup by ID/name rather than direct references
-- Work with AnimationUtilities for complex animation sequences
-- Provide animation state queries for testing
-
-**Signal-Driven Design**:
-```gdscript
-# VotingAnimator listens to these signals:
-VotingManager.district_voting_started.connect(_animate_district)
-VotingManager.pip_voted.connect(_animate_pip_vote)
-HouseSeatsUI.seat_voting_started.connect(_animate_seat)
-```
-
-**Integration**:
-- VotingAnimator connects to VotingManager signals
-- UI components emit animation requests via signals
-- Animator finds nodes by path/ID and animates them
-- No direct coupling between business logic and animation
-
-### 2.2 Enhance AnimationUtilities
-**Location**: `scenes/utilities/animation_utilities.gd`
-**Purpose**: Add more complex animation patterns found in the codebase
-
-**Requirements**:
-- Add `looping_pulse()` method for voting seat animations
-- Add `sequential_flash()` for animating multiple nodes in sequence
-- Add `voting_flash_sequence()` specifically for district voting
-- Ensure all animation methods are static and reusable
-
-## Phase 3: Optional Scene Extraction (LOW PRIORITY)
-
-### 3.1 Consider HouseSeats Scene Extraction
-**Evaluation Criteria**: If HouseSeatsUI grows beyond 200 lines or adds complex interactions
-**Current State**: 207 lines - borderline for extraction
-**If Extracted**:
-- Create `scenes/ui/house_seats.tscn` and `house_seats.gd`
-- Move seat management logic to dedicated scene
-- Update main.tscn to instance the new scene
-- Ensure proper signal connections to district management
-
-### 3.2 DevTools Scene Consideration
-**Current State**: Simple enough to remain in main scene
-**Future**: Extract if dev tools become more complex or need their own UI
-
-## Phase 4: Add Signal Bus (ENHANCEMENT)
-
-### 4.1 Create GameEventBus
-**Location**: `scenes/utilities/game_event_bus.gd`
-**Purpose**: Centralized event system for cross-system communication
-
-**Requirements**:
-- Singleton autoload for global access
-- **PURE EVENT ROUTING** - no business logic or state storage
-- Define signals for major game events: `map_regenerated`, `voting_phase_changed`, `district_limit_reached`, `pip_spawned`, `district_created`
-- Provide event subscription/unsubscription methods
-- Include event data validation for robust communication
-- Support event replay for debugging/testing
-
-**Decoupled Design**:
-```gdscript
-# Systems connect through the bus, never directly:
-# DevToolsManager -> GameEventBus.map_regenerated -> DistrictManager
-# DistrictManager -> GameEventBus.district_created -> HouseSeatsUI
-# VotingManager -> GameEventBus.voting_complete -> Multiple listeners
-```
-
-**Integration**:
-- Replace remaining direct NodePath references with bus events
-- Systems emit to bus, never call methods directly on other systems
-- Bus provides event history for unit test verification
-- Enable/disable bus for testing isolated components
+### Benefits of This Architecture
+- **Testable**: Each manager class is pure business logic
+- **Modular**: UI components are independent subscribers
+- **Predictable**: Clear data flow from UI → Main → Managers → SignalBus → UI
+- **Maintainable**: No circular dependencies or complex signal webs
 
 ## Implementation Strategy
 - **Signal-first approach**: All new classes communicate via signals, no direct dependencies
@@ -305,13 +218,23 @@ func is_tie() -> bool:
     return green_votes == orange_votes
 ```
 
-## Dependency-Free Architecture Goals
+## Current Architecture State
 ```
-VotingManager (signals only) ← DistrictCounterUI
-SeatManager (data only) ← HouseSeatsUI  
-GeometryManager (static functions) ← DistrictManager
-VotingAnimator (signals only) ← Multiple UI components
-GameEventBus (pure routing) ← All systems
+UI Layer:
+  DistrictCounterUI → SignalBus.vote_requested → Main
+  DevToolsUI → SignalBus.regenerate_map_requested → Main
+  HouseSeatsUI ← SignalBus.seat_assignments_updated
+
+Coordination:
+  Main.gd (Call Down, Signal Up coordinator)
+
+Business Logic:
+  VotingManager ← Main.start_voting()
+  SeatManager ← Main.update_seats()
+  GeometryManager (static utilities)
+
+Event Broadcasting:
+  SignalBus (minimal, reactive UI updates only)
 ```
 
 ## Testing After Each Phase
@@ -345,3 +268,25 @@ GameEventBus (pure routing) ← All systems
 - `scenes/main/dev_tools_manager.gd` - Fix method calls, add signal-based communication
 - Add unit test files in `tests/` directory for each new manager class
 - Any preload() statements pointing to moved files
+
+## Known Technical Debt / Future Improvements
+
+### Max Seats Configuration Duplication
+**Issue**: `max_seats` is currently defined in both:
+- `SeatManager` (default 5)
+- `DistrictManager.DEFAULT_MAX_DISTRICTS` (also 5)
+
+**Future Solution**: When implementing a level system, create a `Game` autoload with level configuration:
+```gdscript
+# Future Game autoload
+class_name Game
+extends Node
+
+var current_level: LevelData
+var max_districts: int
+var max_house_seats: int
+
+# Level data would contain all game parameters
+```
+
+**Current Status**: Both systems work independently but may get out of sync if changed manually. This will be resolved when implementing the level/game state system.
