@@ -17,7 +17,7 @@ func _ready():
 	if not district_manager:
 		push_error("DistrictInputHandler: Could not find DistrictManager at path: " + str(district_manager_path))
 
-func _input(event):
+func _unhandled_input(event: InputEvent) -> void:
 	if not district_manager:
 		return
 	

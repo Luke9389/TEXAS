@@ -17,6 +17,7 @@ var texas_boundary: TexasBoundary = null
 signal district_created(district: DistrictArea)
 signal district_deleted(district: DistrictArea)
 signal district_limit_reached()
+signal districts_cleared()
 
 func _ready():
 	# Find the Texas boundary
@@ -50,6 +51,7 @@ func clear_all_districts():
 	for district in all_districts:
 		district.queue_free()
 	all_districts.clear()
+	districts_cleared.emit()
 
 
 func delete_district(district: DistrictArea):

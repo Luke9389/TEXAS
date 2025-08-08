@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://cgmdrn6ppgb6f"]
+[gd_scene load_steps=11 format=3 uid="uid://cgmdrn6ppgb6f"]
 
 [ext_resource type="PackedScene" uid="uid://b1eri6ejadk4w" path="res://scenes/TEXAS/TEXAS.tscn" id="1_lquwl"]
 [ext_resource type="Script" uid="uid://cflum3cx3oots" path="res://scenes/main/pip_spawner.gd" id="2_7mycd"]
@@ -6,12 +6,17 @@
 [ext_resource type="Script" uid="uid://bhrajnufn15jh" path="res://scenes/main/district_manager.gd" id="4_district_manager"]
 [ext_resource type="Script" uid="uid://bxv1kn5n2057n" path="res://scenes/main/district_input_handler.gd" id="5_7mycd"]
 [ext_resource type="Script" uid="uid://clpmpt7xdvrdt" path="res://scenes/main/district_counter_ui.gd" id="5_lquwl"]
+[ext_resource type="Script" uid="uid://cu8ys35kxddnp" path="res://scenes/main/house_seats_ui.gd" id="7_a8run"]
+[ext_resource type="Texture2D" uid="uid://cp4h8wy2gfjrg" path="res://assets/blue-chair@4x.png" id="7_b1x3f"]
+[ext_resource type="Script" uid="uid://dt0003l2g0ygw" path="res://scenes/main/dev_tools_ui.gd" id="7_yyfjg"]
+[ext_resource type="Script" uid="uid://b3yjpn256rhru" path="res://scenes/main/dev_tools_manager.gd" id="8_b1x3f"]
 
 [node name="Main" type="Node"]
 
 [node name="Geography" type="Node2D" parent="."]
 
 [node name="TEXAS" parent="Geography" instance=ExtResource("1_lquwl")]
+position = Vector2(133, 0)
 
 [node name="GameplayManagement" type="Node2D" parent="."]
 
@@ -29,15 +34,18 @@ script = ExtResource("5_7mycd")
 
 [node name="UserInterface" type="Control" parent="."]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="DistrictCounterUI" type="Control" parent="UserInterface" node_paths=PackedStringArray("green_label", "orange_label", "gray_label", "districts_progress", "districts_label", "vote_button")]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 143.0
+offset_bottom = 152.0
 script = ExtResource("5_lquwl")
 green_label = NodePath("VBoxContainer/GreenLabel")
 orange_label = NodePath("VBoxContainer/OrangeLabel")
@@ -47,10 +55,21 @@ districts_label = NodePath("VBoxContainer/Control/DistrictsLabel")
 vote_button = NodePath("VBoxContainer/VoteButton")
 district_manager_path = NodePath("../../GameplayManagement/DistrictManager")
 
+[node name="Panel" type="Panel" parent="UserInterface/DistrictCounterUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="VBoxContainer" type="VBoxContainer" parent="UserInterface/DistrictCounterUI"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="GreenLabel" type="Label" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
 layout_mode = 2
@@ -75,3 +94,111 @@ layout_mode = 2
 [node name="VoteButton" type="Button" parent="UserInterface/DistrictCounterUI/VBoxContainer"]
 layout_mode = 2
 text = "Vote!"
+
+[node name="HouseSeatsUI" type="Control" parent="UserInterface"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -481.0
+offset_top = 25.0
+offset_right = -26.0
+offset_bottom = 118.0
+grow_horizontal = 0
+script = ExtResource("7_a8run")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UserInterface/HouseSeatsUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="HouseSeat" type="TextureRect" parent="UserInterface/HouseSeatsUI/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("7_b1x3f")
+expand_mode = 3
+stretch_mode = 4
+
+[node name="HouseSeat2" type="TextureRect" parent="UserInterface/HouseSeatsUI/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("7_b1x3f")
+expand_mode = 3
+stretch_mode = 4
+
+[node name="HouseSeat3" type="TextureRect" parent="UserInterface/HouseSeatsUI/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("7_b1x3f")
+expand_mode = 3
+stretch_mode = 4
+
+[node name="HouseSeat4" type="TextureRect" parent="UserInterface/HouseSeatsUI/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("7_b1x3f")
+expand_mode = 3
+stretch_mode = 4
+
+[node name="HouseSeat5" type="TextureRect" parent="UserInterface/HouseSeatsUI/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("7_b1x3f")
+expand_mode = 3
+stretch_mode = 4
+
+[node name="DevTools" type="Control" parent="." node_paths=PackedStringArray("dev_tools_manager")]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -278.0
+offset_top = -154.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("7_yyfjg")
+dev_tools_manager = NodePath("../DevToolsManager")
+
+[node name="Panel" type="Panel" parent="DevTools"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DevTools/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ToggleLabel" type="Label" parent="DevTools/Panel/VBoxContainer"]
+layout_mode = 2
+text = "Dev Tools (esc)"
+horizontal_alignment = 1
+
+[node name="RegenerateButton" type="Button" parent="DevTools/Panel/VBoxContainer"]
+layout_mode = 2
+text = "Regenerate map"
+
+[node name="StrategyContainer" type="HBoxContainer" parent="DevTools/Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="DevTools/Panel/VBoxContainer/StrategyContainer"]
+layout_mode = 2
+text = "Spawn Strategy:"
+
+[node name="StrategyOption" type="OptionButton" parent="DevTools/Panel/VBoxContainer/StrategyContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DevToolsManager" type="Node" parent="." node_paths=PackedStringArray("district_manager", "pip_spawner", "district_counter_ui")]
+script = ExtResource("8_b1x3f")
+district_manager = NodePath("../GameplayManagement/DistrictManager")
+pip_spawner = NodePath("../GameplayManagement/PipSpawner")
+district_counter_ui = NodePath("../UserInterface/DistrictCounterUI")

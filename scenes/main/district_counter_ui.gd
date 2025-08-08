@@ -15,8 +15,10 @@ const VOTING_PIP_DELAY = 0.15
 @export var districts_label: Label
 @export var vote_button: Button
 @export var district_manager_path: NodePath = "../DistrictManager"
+@export var house_seats_ui_path: NodePath = "../HouseSeatsUI"
 
 var district_manager: DistrictManager
+var house_seats_ui: HouseSeatsUI
 
 func _ready():
 	# Find the district manager in the scene
@@ -25,6 +27,13 @@ func _ready():
 	
 	if not district_manager:
 		push_warning("DistrictCounterUI: Could not find DistrictManager at path: " + str(district_manager_path))
+	
+	# Find the house seats UI
+	if house_seats_ui_path:
+		house_seats_ui = get_node_or_null(house_seats_ui_path) as HouseSeatsUI
+	
+	if not house_seats_ui:
+		push_warning("DistrictCounterUI: Could not find HouseSeatsUI at path: " + str(house_seats_ui_path))
 	
 	if district_manager:
 		district_manager.district_created.connect(_on_district_created)
@@ -202,7 +211,12 @@ func _animate_voting_by_district():
 		_finish_voting()
 		return
 	
-	# Process each district sequentially
+	var round_number = 1
+	var tied_districts: Array[DistrictArea] = []
+	
+	print("=== ROUND ", round_number, ": General Election ===")
+	
+	# Process each district sequentially in the first round
 	for i in range(districts.size()):
 		var district = districts[i]
 		print("Starting voting for district ", i + 1)
@@ -212,16 +226,65 @@ func _animate_voting_by_district():
 			await get_tree().create_timer(VOTING_DISTRICT_DELAY).timeout
 		
 		# Animate pips in this district
-		await _animate_district_voting(district)
+		var winning_party = await _animate_district_voting(district)
+		
+		# Check if this district tied
+		if winning_party == PipArea.Party.NONE:
+			tied_districts.append(district)
+
+	# Keep running runoff rounds until no ties remain
+	while not tied_districts.is_empty():
+		round_number += 1
+		print("=== ROUND ", round_number, ": Runoff Elections ===")
+		print("Found ", tied_districts.size(), " tied districts, starting runoff round ", round_number - 1, "...")
+		
+		# Update vote button text to show current runoff round
+		if vote_button:
+			if round_number == 2:
+				vote_button.text = "Runoff Election..."
+			else:
+				vote_button.text = "Runoff Round " + str(round_number - 1) + "..."
+		
+		# Wait a bit before starting runoffs
+		await get_tree().create_timer(VOTING_DISTRICT_DELAY * 2).timeout
+		
+		var still_tied_districts: Array[DistrictArea] = []
+		
+		# Process each tied district
+		for i in range(tied_districts.size()):
+			var district = tied_districts[i]
+			print("Starting runoff election for tied district")
+			
+			# Wait between runoff districts
+			if i > 0:
+				await get_tree().create_timer(VOTING_DISTRICT_DELAY).timeout
+			
+			# Run the voting again for this tied district
+			var winning_party = await _animate_district_voting(district)
+			
+			# If still tied, add to next round
+			if winning_party == PipArea.Party.NONE:
+				still_tied_districts.append(district)
+				print("District still tied after round ", round_number, ", will continue to next round")
+			else:
+				print("District resolved in round ", round_number, ", winner: ", winning_party)
+		
+		# Update tied districts list for potential next round
+		tied_districts = still_tied_districts
 
 	# All districts done
+	print("All districts resolved after ", round_number, " rounds!")
 	_finish_voting()
 
 # Animate voting for pips in a single district
-func _animate_district_voting(district: DistrictArea):
+func _animate_district_voting(district: DistrictArea) -> PipArea.Party:
 	# Set the district to voting state (blue flashing)
 	if district.has_method("set_voting_state"):
 		district.set_voting_state(true)
+	
+	# Notify house seats UI that this district is being voted on
+	if house_seats_ui:
+		house_seats_ui.start_voting_for_district(district)
 	
 	var green_votes = 0
 	var orange_votes = 0
@@ -259,9 +322,17 @@ func _animate_district_voting(district: DistrictArea):
 	# Stop the voting animation and update district colors based on actual votes
 	if district.has_method("set_voting_state"):
 		district.set_voting_state(false)
-	district._apply_colors_for_party(winning_party)
+	
+	# Set the post-voting party so colors persist
+	if district.has_method("set_post_voting_party"):
+		district.set_post_voting_party(winning_party)
+	
+	# Update the house seat immediately after this district finishes voting
+	if house_seats_ui:
+		house_seats_ui.finish_voting_for_district(district, winning_party)
 	
 	print("District voted - Green: ", green_votes, " Orange: ", orange_votes, " Winner: ", winning_party)
+	return winning_party
 
 # Finish the voting process
 func _finish_voting():
@@ -289,9 +360,25 @@ func _reset_all_pip_voting():
 	var all_pips = district_manager.get_all_pips()
 	for pip in all_pips:
 		pip.reset_voting()
+	
+	# Also reset voting state for all districts
+	var all_districts = district_manager.get_all_districts()
+	for district in all_districts:
+		if district.has_method("reset_voting_state"):
+			district.reset_voting_state()
 
 # Reset vote button when districts change so user can vote again
 func _reset_vote_button_after_district_change():
 	if vote_button:
 		vote_button.text = "Vote!"
 		# Button state will be handled by _update_vote_button_state()
+
+func reset_counters():
+	update_district_counts()
+	_update_vote_button_state()
+	_reset_vote_button_after_district_change()
+	_reset_all_pip_voting()
+	
+	# Reset house seats
+	if house_seats_ui:
+		house_seats_ui.reset_seats()

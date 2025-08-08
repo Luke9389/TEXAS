@@ -86,11 +86,14 @@ func _is_position_valid(_position: Vector2, min_distance: float = 60.0) -> bool:
 func get_all_spawned_pips() -> Array[PipArea]:
 	return spawned_pips
 
-func clear_all_pips():
+func clear_pips():
 	for pip in spawned_pips:
 		if is_instance_valid(pip):
 			pip.queue_free()
 	spawned_pips.clear()
+
+func clear_all_pips():
+	clear_pips()
 
 func respawn_pips():
 	clear_all_pips()

@@ -18,6 +18,8 @@ var polygon_points: PackedVector2Array = []
 var contained_pips: Array[PipArea] = []
 var district_manager: Node2D = null
 var currently_enclosed_pips: Array[PipArea] = []
+var post_voting_party: PipArea.Party = PipArea.Party.NONE
+var has_voted: bool = false
 
 var line_2d: Line2D
 var polygon_2d: Polygon2D
@@ -284,5 +286,17 @@ func _stop_voting_animation():
 		voting_tween.kill()
 		voting_tween = null
 	
-	# Restore normal colors
+	# If we've voted, keep the post-voting colors
+	# Otherwise restore normal colors
+	if not has_voted:
+		update_district_colors()
+
+func set_post_voting_party(party: PipArea.Party):
+	post_voting_party = party
+	has_voted = true
+	_apply_colors_for_party(party)
+
+func reset_voting_state():
+	has_voted = false
+	post_voting_party = PipArea.Party.NONE
 	update_district_colors()
