@@ -6,23 +6,23 @@ static func count_pips_by_party(pips: Array) -> Dictionary:
 	var counts = {"green": 0, "orange": 0}
 	for pip in pips:
 		if pip is PipArea:
-			if pip.party == PipArea.Party.GREEN:
+			if pip.party == GameTypes.Party.GREEN:
 				counts.green += 1
-			elif pip.party == PipArea.Party.ORANGE:
+			elif pip.party == GameTypes.Party.ORANGE:
 				counts.orange += 1
 	return counts
 
 # Determine winning party from pip counts
-static func get_winning_party_from_counts(green_count: int, orange_count: int) -> PipArea.Party:
+static func get_winning_party_from_counts(green_count: int, orange_count: int) -> GameTypes.Party:
 	if green_count > orange_count:
-		return PipArea.Party.GREEN
+		return GameTypes.Party.GREEN
 	elif orange_count > green_count:
-		return PipArea.Party.ORANGE
+		return GameTypes.Party.ORANGE
 	else:
-		return PipArea.Party.NONE
+		return GameTypes.Party.NONE
 
 # Determine winning party from a collection of pips
-static func get_winning_party(pips: Array) -> PipArea.Party:
+static func get_winning_party(pips: Array) -> GameTypes.Party:
 	var counts = count_pips_by_party(pips)
 	return get_winning_party_from_counts(counts.green, counts.orange)
 
@@ -68,11 +68,11 @@ static func get_all_districts_summary(districts: Array) -> Dictionary:
 			total_orange_pips += pip_counts.get("orange", 0)
 			
 			match winning_party:
-				PipArea.Party.GREEN:
+				GameTypes.Party.GREEN:
 					green_count += 1
-				PipArea.Party.ORANGE:
+				GameTypes.Party.ORANGE:
 					orange_count += 1
-				PipArea.Party.NONE:
+				GameTypes.Party.NONE:
 					tied_count += 1
 	
 	return {

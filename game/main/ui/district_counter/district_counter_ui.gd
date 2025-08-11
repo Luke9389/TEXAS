@@ -25,11 +25,11 @@ func _on_districts_modified(districts: Array[DistrictData]) -> void:
 	
 	for district in districts:
 		match district.winning_party:
-			PipArea.Party.GREEN:
+			GameTypes.Party.GREEN:
 				green_count += 1
-			PipArea.Party.ORANGE:
+			GameTypes.Party.ORANGE:
 				orange_count += 1
-			PipArea.Party.NONE:
+			GameTypes.Party.NONE:
 				gray_count += 1
 	
 	# Update labels

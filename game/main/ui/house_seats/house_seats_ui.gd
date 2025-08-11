@@ -79,16 +79,16 @@ func _on_district_voting_complete(result: VotingResult):
 		_stop_seat_animation(seat_index)
 		_set_seat_texture_for_party(seat_index, result.winning_party)
 
-func _set_seat_texture_for_party(seat_index: int, party: PipArea.Party):
+func _set_seat_texture_for_party(seat_index: int, party: GameTypes.Party):
 	if seat_index < 0 or seat_index >= seat_textures.size():
 		return
 	
 	var seat = seat_textures[seat_index]
 	
 	match party:
-		PipArea.Party.GREEN:
+		GameTypes.Party.GREEN:
 			seat.texture = green_chair_texture
-		PipArea.Party.ORANGE:
+		GameTypes.Party.ORANGE:
 			seat.texture = orange_chair_texture
 		_:
 			seat.texture = blue_chair_texture

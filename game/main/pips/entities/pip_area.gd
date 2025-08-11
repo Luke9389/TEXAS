@@ -1,10 +1,9 @@
 class_name PipArea
 extends Node2D
 
-enum Party { NONE, GREEN, ORANGE }
 enum VoteStatus { NOT_VOTED, VOTED, DID_NOT_VOTE }
 
-@export var party: Party = Party.GREEN:
+@export var party: GameTypes.Party = GameTypes.Party.GREEN:
 	set(value):
 		party = value
 		update_visual()
@@ -60,13 +59,13 @@ func update_visual():
 	# Set base color and texture based on party
 	var base_color: Color
 	match party:
-		Party.GREEN:
+		GameTypes.Party.GREEN:
 			pip_sprite.texture = green_texture
 			base_color = PartyColors.GREEN
-		Party.ORANGE:
+		GameTypes.Party.ORANGE:
 			pip_sprite.texture = orange_texture
 			base_color = PartyColors.ORANGE
-		Party.NONE:
+		GameTypes.Party.NONE:
 			base_color = PartyColors.GRAY
 	
 	# Modify brightness based on voting status
@@ -82,7 +81,7 @@ func get_party_color() -> Color:
 	return PartyColors.get_party_color(party)
 
 func set_random_party():
-	party = Party.GREEN if randf() < 0.5 else Party.ORANGE
+	party = GameTypes.Party.GREEN if randf() < 0.5 else GameTypes.Party.ORANGE
 
 func set_vote_status(status: VoteStatus):
 	vote_status = status

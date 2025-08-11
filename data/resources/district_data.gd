@@ -6,7 +6,7 @@ extends Resource
 @export var pip_data: Array[PipData] = []  # Contains full pip data for voting
 @export var polygon_points: PackedVector2Array = PackedVector2Array()
 @export var position: Vector2 = Vector2.ZERO
-@export var winning_party: PipArea.Party = PipArea.Party.NONE
+@export var winning_party: GameTypes.Party = GameTypes.Party.NONE
 @export var has_voted: bool = false
 
 func get_pip_count() -> int:

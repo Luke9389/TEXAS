@@ -159,9 +159,9 @@ func _simulate_district_voting(district_data: DistrictData, round_number: int, i
 		# Determine if this pip votes (80% chance)
 		if randf() < TURNOUT_RATE:
 			pip_data.vote()
-			if pip_data.party == PipArea.Party.GREEN:
+			if pip_data.party == GameTypes.Party.GREEN:
 				green_votes += 1
-			elif pip_data.party == PipArea.Party.ORANGE:
+			elif pip_data.party == GameTypes.Party.ORANGE:
 				orange_votes += 1
 		else:
 			pip_data.abstain()

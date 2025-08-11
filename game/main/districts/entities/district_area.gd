@@ -18,7 +18,7 @@ var polygon_points: PackedVector2Array = []
 var contained_pips: Array[PipArea] = []
 var district_manager: Node2D = null
 var currently_enclosed_pips: Array[PipArea] = []
-var post_voting_party: PipArea.Party = PipArea.Party.NONE
+var post_voting_party: GameTypes.Party = GameTypes.Party.NONE
 var has_voted: bool = false
 
 var line_2d: Line2D
@@ -193,7 +193,7 @@ func get_area() -> float:
 func get_pip_counts() -> Dictionary:
 	return DistrictStatistics.count_pips_by_party(contained_pips)
 
-func get_winning_party() -> PipArea.Party:
+func get_winning_party() -> GameTypes.Party:
 	return DistrictStatistics.get_winning_party(contained_pips)
 
 func update_district_colors():
@@ -228,11 +228,11 @@ func animate_deletion():
 	deletion_tween.tween_property(self, "modulate", Color.TRANSPARENT, ANIMATION_FADE_DURATION).set_delay(ANIMATION_FLASH_DURATION)
 
 # Helper function to apply colors based on party
-func _apply_colors_for_party(party: PipArea.Party, use_default_for_tie: bool = false):
+func _apply_colors_for_party(party: GameTypes.Party, use_default_for_tie: bool = false):
 	if not line_2d or not polygon_2d:
 		return
 	
-	if party == PipArea.Party.NONE and use_default_for_tie:
+	if party == GameTypes.Party.NONE and use_default_for_tie:
 		line_2d.default_color = PartyColors.get_default_border_color()
 		polygon_2d.color = PartyColors.get_default_fill_color()
 	else:
@@ -294,14 +294,14 @@ func _stop_voting_animation():
 	if not has_voted:
 		update_district_colors()
 
-func set_post_voting_party(party: PipArea.Party):
+func set_post_voting_party(party: GameTypes.Party):
 	post_voting_party = party
 	has_voted = true
 	_apply_colors_for_party(party)
 
 func reset_voting_state():
 	has_voted = false
-	post_voting_party = PipArea.Party.NONE
+	post_voting_party = GameTypes.Party.NONE
 	update_district_colors()
 
 # Handle voting completion signal from VotingManager

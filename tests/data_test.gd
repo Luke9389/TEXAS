@@ -70,7 +70,7 @@ func test_voting_result():
 	
 	assert(result.is_valid())
 	assert(result.get_total_votes() == 27)
-	assert(result.winning_party == PipArea.Party.GREEN)
+	assert(result.winning_party == GameTypes.Party.GREEN)
 	assert(result.get_vote_margin() == 3)
 	assert(result.turnout_percentage == 90.0)
 	assert(not result.is_tie())
@@ -81,7 +81,7 @@ func test_voting_result():
 	tie_result.set_vote_counts(10, 10, 25)
 	
 	assert(tie_result.is_tie())
-	assert(tie_result.winning_party == PipArea.Party.NONE)
+	assert(tie_result.winning_party == GameTypes.Party.NONE)
 	assert(tie_result.get_vote_margin() == 0)
 	assert(tie_result.turnout_percentage == 80.0)
 	

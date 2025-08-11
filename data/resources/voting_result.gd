@@ -4,7 +4,7 @@ extends Resource
 @export var district_id: String = ""
 @export var green_votes: int = 0
 @export var orange_votes: int = 0
-@export var winning_party: PipArea.Party = PipArea.Party.NONE
+@export var winning_party: GameTypes.Party = GameTypes.Party.NONE
 @export var was_runoff: bool = false
 @export var round_number: int = 1
 @export var total_pips: int = 0
@@ -19,13 +19,13 @@ func is_tie() -> bool:
 func is_valid() -> bool:
 	return district_id != "" and get_total_votes() >= 0
 
-func calculate_winning_party() -> PipArea.Party:
+func calculate_winning_party() -> GameTypes.Party:
 	if green_votes > orange_votes:
-		winning_party = PipArea.Party.GREEN
+		winning_party = GameTypes.Party.GREEN
 	elif orange_votes > green_votes:
-		winning_party = PipArea.Party.ORANGE
+		winning_party = GameTypes.Party.ORANGE
 	else:
-		winning_party = PipArea.Party.NONE
+		winning_party = GameTypes.Party.NONE
 	return winning_party
 
 func get_vote_margin() -> int:
@@ -51,17 +51,17 @@ func set_vote_counts(green: int, orange: int, total: int) -> void:
 	calculate_winning_party()
 	calculate_turnout_percentage()
 
-func add_vote(party: PipArea.Party) -> void:
+func add_vote(party: GameTypes.Party) -> void:
 	match party:
-		PipArea.Party.GREEN:
+		GameTypes.Party.GREEN:
 			green_votes += 1
-		PipArea.Party.ORANGE:
+		GameTypes.Party.ORANGE:
 			orange_votes += 1
 
 func reset_votes() -> void:
 	green_votes = 0
 	orange_votes = 0
-	winning_party = PipArea.Party.NONE
+	winning_party = GameTypes.Party.NONE
 
 func clone() -> VotingResult:
 	var new_result = VotingResult.new()
@@ -78,9 +78,9 @@ func clone() -> VotingResult:
 func to_log_string() -> String:
 	var party_name = "TIE"
 	match winning_party:
-		PipArea.Party.GREEN:
+		GameTypes.Party.GREEN:
 			party_name = "GREEN"
-		PipArea.Party.ORANGE:
+		GameTypes.Party.ORANGE:
 			party_name = "ORANGE"
 	
 	var runoff_text = " (RUNOFF)" if was_runoff else ""

@@ -21,22 +21,22 @@ const DELETION_RED = Color(1.0, 0.2, 0.2)
 # Highlight factor for pip selection
 const PIP_HIGHLIGHT_FACTOR = 1.5
 
-static func get_party_color(party: PipArea.Party, alpha: float = 1.0) -> Color:
+static func get_party_color(party: GameTypes.Party, alpha: float = 1.0) -> Color:
 	var color: Color
 	match party:
-		PipArea.Party.GREEN:
+		GameTypes.Party.GREEN:
 			color = GREEN
-		PipArea.Party.ORANGE:
+		GameTypes.Party.ORANGE:
 			color = ORANGE
 		_:
 			color = GRAY
 	color.a = alpha
 	return color
 
-static func get_party_border_color(party: PipArea.Party) -> Color:
+static func get_party_border_color(party: GameTypes.Party) -> Color:
 	return get_party_color(party, BORDER_ALPHA)
 
-static func get_party_fill_color(party: PipArea.Party) -> Color:
+static func get_party_fill_color(party: GameTypes.Party) -> Color:
 	return get_party_color(party, FILL_ALPHA)
 
 static func get_default_border_color() -> Color:

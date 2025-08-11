@@ -2,7 +2,7 @@ class_name PipData
 extends Resource
 
 @export var id: String = ""
-@export var party: PipArea.Party = PipArea.Party.NONE
+@export var party: GameTypes.Party = GameTypes.Party.NONE
 @export var position: Vector2 = Vector2.ZERO
 @export var vote_status: PipArea.VoteStatus = PipArea.VoteStatus.NOT_VOTED
 
@@ -13,7 +13,7 @@ func get_party_color() -> Color:
 	return PartyColors.get_party_color(party)
 
 func set_random_party() -> void:
-	party = PipArea.Party.GREEN if randf() < 0.5 else PipArea.Party.ORANGE
+	party = GameTypes.Party.GREEN if randf() < 0.5 else GameTypes.Party.ORANGE
 
 func has_voted() -> bool:
 	return vote_status == PipArea.VoteStatus.VOTED
@@ -41,9 +41,9 @@ func clone() -> PipData:
 func to_log_string() -> String:
 	var party_name = "NONE"
 	match party:
-		PipArea.Party.GREEN:
+		GameTypes.Party.GREEN:
 			party_name = "GREEN"
-		PipArea.Party.ORANGE:
+		GameTypes.Party.ORANGE:
 			party_name = "ORANGE"
 	
 	var status_name = "NOT_VOTED"
